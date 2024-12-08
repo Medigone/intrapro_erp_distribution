@@ -136,6 +136,11 @@ app_license = "mit"
 # Document Events
 # ---------------
 # Hook on document methods and events
+doc_events = {
+    "Transferts Marchandise": {
+        "validate": "intrapro_erp_distribution.intrapro_erp_distribution.doctype.transferts_marchandise.transferts_marchandise.validate_delivery_notes"
+    }
+}
 
 # doc_events = {
 # 	"*": {
