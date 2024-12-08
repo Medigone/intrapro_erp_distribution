@@ -18,8 +18,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Bon de Livraison",
-   "options": "Delivery Note",
-   "reqd": 1
+   "options": "Delivery Note"
   },
   {
    "fetch_from": "delivery_note.customer",
@@ -55,7 +54,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-08 23:06:58.756519",
+ "modified": "2024-12-09 00:18:20.291909",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Bons de Livraison Transferts",

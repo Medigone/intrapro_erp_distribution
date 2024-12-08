@@ -20,30 +20,32 @@ class TransfertsMarchandise(Document):
         return_items_to_source(self)
 
 
-def validate_delivery_notes(doc):
+def validate_delivery_notes(doc, method=None):
     """Valide que les bons de livraison sont uniques dans le transfert."""
+    if not doc.delivery_notes or len(doc.delivery_notes) == 0:
+        frappe.throw("La table des bons de livraison ne peut pas être vide.")
+
     existing_delivery_notes = set()
 
     for row in doc.delivery_notes:
         if not row.delivery_note:
             frappe.throw("Tous les bons de livraison doivent être renseignés.")
-        
+
         if row.delivery_note in existing_delivery_notes:
             frappe.throw(f"Le bon de livraison {row.delivery_note} est déjà ajouté dans ce transfert.")
-        
-        # Vérifie si le bon de livraison existe déjà dans un autre transfert
-        linked_transfers = frappe.db.exists(
-            "Transferts Marchandise",
-            {
-                "docstatus": ["<", 2],  # Brouillon ou soumis
-                "delivery_notes.delivery_note": row.delivery_note,
-                "name": ["!=", doc.name],  # Exclut le document en cours d'édition
-            }
-        )
-        if linked_transfers:
-            frappe.throw(f"Le bon de livraison {row.delivery_note} est déjà lié au transfert {linked_transfers}.")
 
-        # Vérifie si le bon de livraison est déjà marqué comme transféré
+        # Vérifiez si ce bon de livraison est déjà lié à un autre transfert
+        linked_transfers = frappe.db.sql("""
+            SELECT parent
+            FROM `tabBons de Livraison Transferts`
+            WHERE delivery_note = %s AND parent != %s
+              AND parent IN (SELECT name FROM `tabTransferts Marchandise` WHERE docstatus < 2)
+        """, (row.delivery_note, doc.name))
+
+        if linked_transfers:
+            frappe.throw(f"Le bon de livraison {row.delivery_note} est déjà lié au transfert {linked_transfers[0][0]}.")
+
+        # Vérifiez si le bon de livraison est déjà marqué comme transféré
         prepared_status = frappe.db.get_value("Delivery Note", row.delivery_note, "custom_préparé")
         if prepared_status:
             frappe.throw(f"Le bon de livraison {row.delivery_note} est déjà marqué comme transféré vers préparation.")
@@ -79,10 +81,8 @@ def return_items_to_source(doc):
         for item in delivery_note.items:
             item_key = (item.item_code, item.uom)
             if item_key in consolidated_items:
-                # Consolider la quantité pour le même article et unité de mesure
                 consolidated_items[item_key]["qty"] += item.qty
             else:
-                # Ajouter un nouvel article dans la consolidation
                 consolidated_items[item_key] = {
                     "item_code": item.item_code,
                     "qty": item.qty,
@@ -109,7 +109,6 @@ def return_items_to_source(doc):
         for item_data in consolidated_items.values()
     ]
 
-    # Enregistrer et soumettre le Stock Entry
     stock_entry.insert()
     stock_entry.submit()
 
@@ -132,17 +131,14 @@ def auto_transfer_stock(transfert_name):
     for row in transfert.delivery_notes:
         delivery_note = frappe.get_doc("Delivery Note", row.delivery_note)
 
-        # Vérifie que le bon de livraison est complet pour le transfert
         if delivery_note.status != "To Deliver":
             frappe.throw(f"Le bon de livraison {row.delivery_note} n'est pas prêt pour le transfert.")
 
         for item in delivery_note.items:
             item_key = (item.item_code, item.uom)
             if item_key in consolidated_items:
-                # Consolider la quantité pour le même article et unité de mesure
                 consolidated_items[item_key]["qty"] += item.qty
             else:
-                # Ajouter un nouvel article dans la consolidation
                 consolidated_items[item_key] = {
                     "item_code": item.item_code,
                     "qty": item.qty,
@@ -152,7 +148,6 @@ def auto_transfer_stock(transfert_name):
                     "basic_rate": item.rate,
                 }
 
-    # Génère un Stock Entry avec les articles consolidés
     stock_entry = frappe.new_doc("Stock Entry")
     stock_entry.purpose = "Material Transfer"
     stock_entry.from_warehouse = transfert.from_warehouse
