@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-08 18:39:51.431435",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "wilaya",
+  "column_break_mecf",
+  "code",
+  "region"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Titre",
+   "search_index": 1
+  },
+  {
+   "fieldname": "wilaya",
+   "fieldtype": "Data",
+   "label": "Wilaya"
+  },
+  {
+   "fieldname": "column_break_mecf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Code"
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Link",
+   "label": "R\u00e9gion",
+   "options": "Territory"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-08 21:29:58.530391",
+ "modified_by": "Administrator",
+ "module": "IntraPro ERP Distribution",
+ "name": "Communes",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
