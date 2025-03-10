@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class Communes(Document):
+class Commune(Document):
 	pass
