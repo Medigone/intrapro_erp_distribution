@@ -13,6 +13,7 @@
   "column_break_nhgp",
   "immatriculation",
   "charge",
+  "nom_chauffeur",
   "suivi_et_entretien_tab",
   "km",
   "section_break_shkb",
@@ -46,11 +47,15 @@
   {
    "fieldname": "nom",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Nom du v\u00e9hicule"
   },
   {
    "fieldname": "type",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Type de v\u00e9hicule",
    "options": "Camion\nFourgon\nMoto\nAutre"
   },
@@ -61,6 +66,8 @@
   {
    "fieldname": "immatriculation",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Immatriculation"
   },
   {
@@ -73,6 +80,7 @@
   {
    "fieldname": "chauffeur",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Chauffeur principal",
    "link_filters": "[[\"User\",\"role\",\"=\",\"Delivery User\"]]",
    "options": "User"
@@ -155,11 +163,19 @@
    "fieldtype": "Tab Break",
    "label": "Liens",
    "show_dashboard": 1
+  },
+  {
+   "fetch_from": "chauffeur.full_name",
+   "fieldname": "nom_chauffeur",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nom Chauffeur",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-18 14:29:30.585190",
+ "modified": "2025-03-18 16:06:52.333423",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Vehicule",
