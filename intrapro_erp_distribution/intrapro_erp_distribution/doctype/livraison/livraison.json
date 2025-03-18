@@ -27,7 +27,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Statut",
-   "options": "Nouveau\nEn pr\u00e9paration\nEnlev\u00e9\nLivr\u00e9\nPartiellement Livr\u00e9\nAnnul\u00e9"
+   "options": "Nouveau\nEn pr\u00e9paration\nEn Cours\nLivr\u00e9\nPartiellement Livr\u00e9\nAnnul\u00e9"
   },
   {
    "fieldname": "section_break_lkjp",
@@ -36,7 +36,9 @@
   {
    "fieldname": "date_liv",
    "fieldtype": "Date",
-   "label": "Date de livraison"
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date"
   },
   {
    "fieldname": "section_break_zbae",
@@ -45,6 +47,7 @@
   {
    "fieldname": "livreur",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Livreur",
    "options": "Livreur"
   },
@@ -56,12 +59,15 @@
    "fetch_from": "livreur.nom",
    "fieldname": "nom_livreur",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Nom Livreur",
    "read_only": 1
   },
   {
    "fieldname": "vehicule",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "V\u00e9hicule",
    "options": "Vehicule"
   },
@@ -108,7 +114,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-18 22:43:02.899131",
+ "modified": "2025-03-18 22:50:45.981733",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Livraison",
@@ -129,5 +135,30 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Nouveau"
+  },
+  {
+   "color": "Light Blue",
+   "title": "En pr\u00e9paration"
+  },
+  {
+   "color": "Orange",
+   "title": "En Cours"
+  },
+  {
+   "color": "Green",
+   "title": "Livr\u00e9"
+  },
+  {
+   "color": "Pink",
+   "title": "Partiellement Livr\u00e9"
+  },
+  {
+   "color": "Gray",
+   "title": "Annul\u00e9"
+  }
+ ]
 }
