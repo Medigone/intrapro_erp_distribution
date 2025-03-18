@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-03-18 22:19:20.386563",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "section_break_lkjp",
+  "date_liv",
+  "section_break_zbae",
+  "livreur",
+  "vehicule",
+  "column_break_wsgq",
+  "nom_livreur",
+  "bons_de_livraison_tab",
+  "bl",
+  "pr\u00e9paration_des_articles_tab",
+  "ap",
+  "paiements_tab",
+  "pe",
+  "\u00e9tapes_de_livraison_tab",
+  "rt"
+ ],
+ "fields": [
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Statut",
+   "options": "Nouveau\nEn pr\u00e9paration\nEnlev\u00e9\nLivr\u00e9\nPartiellement Livr\u00e9\nAnnul\u00e9"
+  },
+  {
+   "fieldname": "section_break_lkjp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "date_liv",
+   "fieldtype": "Date",
+   "label": "Date de livraison"
+  },
+  {
+   "fieldname": "section_break_zbae",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "livreur",
+   "fieldtype": "Link",
+   "label": "Livreur",
+   "options": "Livreur"
+  },
+  {
+   "fieldname": "column_break_wsgq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "livreur.nom",
+   "fieldname": "nom_livreur",
+   "fieldtype": "Data",
+   "label": "Nom Livreur",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vehicule",
+   "fieldtype": "Link",
+   "label": "V\u00e9hicule",
+   "options": "Vehicule"
+  },
+  {
+   "fieldname": "bons_de_livraison_tab",
+   "fieldtype": "Tab Break",
+   "label": "Bons de Livraison"
+  },
+  {
+   "fieldname": "bl",
+   "fieldtype": "Data",
+   "label": "Tableau BL"
+  },
+  {
+   "fieldname": "pr\u00e9paration_des_articles_tab",
+   "fieldtype": "Tab Break",
+   "label": "Pr\u00e9paration des Articles"
+  },
+  {
+   "fieldname": "ap",
+   "fieldtype": "Data",
+   "label": "Articles pr\u00e9par\u00e9s"
+  },
+  {
+   "fieldname": "paiements_tab",
+   "fieldtype": "Tab Break",
+   "label": "Paiements"
+  },
+  {
+   "fieldname": "pe",
+   "fieldtype": "Data",
+   "label": "Paiements enregistr\u00e9s"
+  },
+  {
+   "fieldname": "\u00e9tapes_de_livraison_tab",
+   "fieldtype": "Tab Break",
+   "label": "\u00c9tapes de Livraison"
+  },
+  {
+   "fieldname": "rt",
+   "fieldtype": "Text Editor",
+   "label": "Routing"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-03-18 22:43:02.899131",
+ "modified_by": "Administrator",
+ "module": "IntraPro ERP Distribution",
+ "name": "Livraison",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

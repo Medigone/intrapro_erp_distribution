@@ -91,7 +91,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-18 16:47:42.752253",
+ "modified": "2025-03-18 22:45:03.982920",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Livreur",
@@ -110,6 +110,7 @@
    "write": 1
   }
  ],
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
@@ -125,5 +126,6 @@
    "color": "Red",
    "title": "Indisponible"
   }
- ]
+ ],
+ "title_field": "nom"
 }
