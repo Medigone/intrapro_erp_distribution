@@ -9,12 +9,16 @@
   "column_break_zwry",
   "section_break_mfil",
   "vehicule",
-  "column_break_noma",
   "km",
+  "column_break_noma",
+  "type_carb",
   "section_break_hutr",
   "montant",
   "column_break_phfm",
-  "recu"
+  "recu",
+  "suivi_de_consommation_tab",
+  "km_parcouru",
+  "cout_km"
  ],
  "fields": [
   {
@@ -66,11 +70,35 @@
    "fieldname": "recu",
    "fieldtype": "Attach Image",
    "label": "Re\u00e7u"
+  },
+  {
+   "fetch_from": "vehicule.type_carb",
+   "fieldname": "type_carb",
+   "fieldtype": "Select",
+   "label": "Type de carburant",
+   "options": "Diesel\nEssence\n\u00c9lectrique\nGPL"
+  },
+  {
+   "fieldname": "suivi_de_consommation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Suivi de Consommation"
+  },
+  {
+   "fieldname": "km_parcouru",
+   "fieldtype": "Float",
+   "label": "Kilom\u00e9trage parcouru depuis dernier plein",
+   "precision": "0"
+  },
+  {
+   "fieldname": "cout_km",
+   "fieldtype": "Currency",
+   "label": "Co\u00fbt par km",
+   "precision": "2"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-18 22:10:08.098025",
+ "modified": "2025-03-18 22:16:47.993175",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Consommation Carburant",

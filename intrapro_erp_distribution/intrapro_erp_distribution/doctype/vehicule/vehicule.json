@@ -10,6 +10,7 @@
   "nom",
   "type",
   "chauffeur",
+  "type_carb",
   "column_break_nhgp",
   "immatriculation",
   "charge",
@@ -185,11 +186,17 @@
    "fieldtype": "Check",
    "in_standard_filter": 1,
    "label": "Activ\u00e9"
+  },
+  {
+   "fieldname": "type_carb",
+   "fieldtype": "Select",
+   "label": "Type de carburant",
+   "options": "Diesel\nEssence\n\u00c9lectrique\nGPL"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-18 16:48:57.647423",
+ "modified": "2025-03-18 22:15:06.946201",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Vehicule",
