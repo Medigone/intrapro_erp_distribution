@@ -17,7 +17,7 @@
    "field_name": "production_plan_qty",
    "idx": 0,
    "is_system_generated": 0,
-   "modified": "2024-12-08 22:28:46.580589",
+   "modified": "2025-03-16 17:19:37.085580",
    "modified_by": "Administrator",
    "module": null,
    "name": "Sales Order Item-production_plan_qty-hidden",
