@@ -61,13 +61,13 @@
   },
   {
    "allow_in_quick_entry": 1,
+   "description": "Le montant du paiement doit \u00eatre sup\u00e9rieur \u00e0 z\u00e9ro.",
    "fieldname": "montant",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Montant",
    "non_negative": 1,
-   "precision": "0",
+   "precision": "2",
    "reqd": 1
   },
   {
@@ -126,7 +126,7 @@
  "image_field": "recu",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-01 16:23:54.532450",
+ "modified": "2025-05-01 16:38:05.377730",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Paiement",
