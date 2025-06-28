@@ -247,3 +247,7 @@ doc_events = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+# template_apps = ['intrapro_erp_distribution', 'webshop']
+website_route_rules = [
+    {"from_route": "/commande_detail/<name>", "to_route": "commande_detail"}
+]

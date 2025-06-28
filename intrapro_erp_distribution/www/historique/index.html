@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Historique des commandes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.js"
+    integrity="sha384-oeUn82QNXPuVkGCkcrInrS1twIxKhkZiFfr2TdiuObZ3n3yIeMiqcRzkIcguaof1"
+    crossorigin="anonymous"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+  <div class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Historique des commandes</h1>
+
+    <div class="mb-6">
+      <p class="text-lg">
+        <span class="font-semibold">Votre solde :</span>
+        <span class="text-blue-600 font-medium">{{ balance or 0.0 }} €</span>
+      </p>
+    </div>
+
+    <!-- Bloc qui sera remplacé par HTMX -->
+    <div id="commande-content">
+
+      {% set status_labels = {
+        "Draft": "Brouillon",
+        "To Deliver": "À livrer",
+        "To Bill": "À facturer",
+        "To Deliver and Bill": "À livrer et facturer",
+        "Completed": "Complété",
+        "Cancelled": "Annulé"
+      } %}
+
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="min-w-full table-auto border-collapse">
+          <thead class="bg-gray-200 text-left">
+            <tr>
+              <th class="p-4">Commande</th>
+              <th class="p-4">Date</th>
+              <th class="p-4">Statut</th>
+              <th class="p-4">Total (€)</th>
+              <th class="p-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if orders %}
+              {% for order in orders %}
+                <tr class="border-t hover:bg-gray-50">
+                  <td class="p-4">{{ order.name }}</td>
+                  <td class="p-4">{{ order.transaction_date }}</td>
+                  <td class="p-4">{{ status_labels[order.status] or order.status }}</td>
+                  <td class="p-4">{{ order.grand_total }}</td>
+                  <td class="p-4">
+                    <button 
+                      hx-get="/commande_detail/{{ order.name }}"
+                      hx-target="#commande-content"
+                      hx-swap="innerHTML"
+                      class="text-sm text-blue-600 underline hover:text-blue-800"
+                    >
+                      Voir détail
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="p-4 text-center text-gray-500">Aucune commande trouvée.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

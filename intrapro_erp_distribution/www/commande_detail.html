@@ -1,0 +1,44 @@
+<!-- apps/intrapro_erp_distribution/intrapro_erp_distribution/www/commande_detail/[name].html -->
+
+<h2 class="text-2xl font-semibold mb-4">Commande {{ order.name }}</h2>
+<p><strong>Date :</strong> {{ order.transaction_date }}</p>
+<p><strong>Statut :</strong> {{ order.status }}</p>
+
+<table class="min-w-full mt-4 table-auto border-collapse bg-white shadow rounded">
+  <thead class="bg-gray-100">
+    <tr>
+      <th class="p-3 text-left">Article</th>
+      <th class="p-3 text-center">Qté</th>
+      <th class="p-3 text-right">PU (€)</th>
+      <th class="p-3 text-right">Total (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in order.items %}
+      <tr class="border-t hover:bg-gray-50">
+        <td class="p-3">{{ item.item_name }}</td>
+        <td class="p-3 text-center">{{ item.qty }}</td>
+        <td class="p-3 text-right">{{ item.rate }}</td>
+        <td class="p-3 text-right">{{ item.amount }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="flex justify-end mt-4">
+  <p class="text-lg font-semibold">
+    Total : <span class="text-blue-600">{{ order.grand_total }} €</span>
+  </p>
+</div>
+
+<!-- Bouton retour -->
+<div class="mt-6">
+  <button 
+    hx-get="/historique"
+    hx-target="#commande-content"
+    hx-swap="innerHTML"
+    class="text-sm text-blue-600 underline hover:text-blue-800"
+  >
+    &larr; Retour à la liste
+  </button>
+</div>
