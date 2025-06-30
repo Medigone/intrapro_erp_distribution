@@ -15,8 +15,8 @@
   "nom_livreur",
   "bons_de_livraison_tab",
   "bl",
-  "pr\u00e9paration_des_articles_tab",
-  "ap",
+  "colis_tab",
+  "liste_colis",
   "paiements_tab",
   "pe",
   "\u00e9tapes_de_livraison_tab",
@@ -27,7 +27,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Statut",
-   "options": "Nouveau\nEn pr\u00e9paration\nEn Cours\nLivr\u00e9\nPartiellement Livr\u00e9\nAnnul\u00e9"
+   "options": "Nouveau\nEnlev\u00e9\nEn Cours\nPartiellement Livr\u00e9\nLivr\u00e9\nAnnul\u00e9"
   },
   {
    "fieldname": "section_break_lkjp",
@@ -82,16 +82,6 @@
    "label": "Tableau BL"
   },
   {
-   "fieldname": "pr\u00e9paration_des_articles_tab",
-   "fieldtype": "Tab Break",
-   "label": "Pr\u00e9paration des Articles"
-  },
-  {
-   "fieldname": "ap",
-   "fieldtype": "Data",
-   "label": "Articles pr\u00e9par\u00e9s"
-  },
-  {
    "fieldname": "paiements_tab",
    "fieldtype": "Tab Break",
    "label": "Paiements"
@@ -110,11 +100,21 @@
    "fieldname": "rt",
    "fieldtype": "Text Editor",
    "label": "Routing"
+  },
+  {
+   "fieldname": "colis_tab",
+   "fieldtype": "Tab Break",
+   "label": "Colis"
+  },
+  {
+   "fieldname": "liste_colis",
+   "fieldtype": "Data",
+   "label": "Liste Colis"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-18 22:50:45.981733",
+ "modified": "2025-06-30 18:11:53.883451",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Livraison",

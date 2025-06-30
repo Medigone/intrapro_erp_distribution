@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-30 18:08:15.047527",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "html",
+  "section_break_ldph",
+  "status",
+  "qr_code",
+  "image",
+  "section_break_cshx",
+  "date",
+  "section_break_kspn",
+  "client",
+  "column_break_tvzk",
+  "bl",
+  "section_break_anxd",
+  "articles"
+ ],
+ "fields": [
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Statut",
+   "options": "Nouveau\nPr\u00e9par\u00e9\nEnlev\u00e9\nLivr\u00e9\nNon Livr\u00e9\nAnnul\u00e9"
+  },
+  {
+   "fieldname": "section_break_cshx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "date",
+   "fieldtype": "Datetime",
+   "label": "Date"
+  },
+  {
+   "fieldname": "section_break_kspn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "qr_code",
+   "fieldtype": "Data",
+   "label": "QR Code"
+  },
+  {
+   "fieldname": "client",
+   "fieldtype": "Link",
+   "label": "Client",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "column_break_tvzk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bl",
+   "fieldtype": "Link",
+   "label": "Bon de livraison",
+   "options": "Delivery Note"
+  },
+  {
+   "fieldname": "section_break_anxd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "articles",
+   "fieldtype": "Table",
+   "label": "Articles",
+   "options": "Articles Colis"
+  },
+  {
+   "fieldname": "html",
+   "fieldtype": "HTML",
+   "label": "HTML"
+  },
+  {
+   "fieldname": "section_break_ldph",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image QR"
+  }
+ ],
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-06-30 18:32:07.744410",
+ "modified_by": "Administrator",
+ "module": "IntraPro ERP Distribution",
+ "name": "Colis",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

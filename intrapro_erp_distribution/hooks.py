@@ -139,6 +139,10 @@ app_license = "mit"
 doc_events = {
     "Transferts Marchandise": {
         "validate": "intrapro_erp_distribution.intrapro_erp_distribution.doctype.transferts_marchandise.transferts_marchandise.validate_delivery_notes"
+    },
+    "Sales Order": {
+        "on_submit": "intrapro_erp_distribution.Sales_order_hooks.create_delivery_note_from_sales_order",
+        "on_cancel": "intrapro_erp_distribution.Sales_order_hooks.cancel_linked_delivery_notes"
     }
 }
 
