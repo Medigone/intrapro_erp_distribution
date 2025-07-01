@@ -8,7 +8,6 @@
   "html",
   "section_break_ldph",
   "status",
-  "qr_code",
   "image",
   "section_break_cshx",
   "date",
@@ -17,6 +16,7 @@
   "column_break_tvzk",
   "bl",
   "section_break_anxd",
+  "scan_barcode",
   "articles"
  ],
  "fields": [
@@ -41,11 +41,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "qr_code",
-   "fieldtype": "Data",
-   "label": "QR Code"
-  },
-  {
    "fieldname": "client",
    "fieldtype": "Link",
    "label": "Client",
@@ -64,6 +59,12 @@
   {
    "fieldname": "section_break_anxd",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "scan_barcode",
+   "fieldtype": "Data",
+   "label": "Scanner Code-barres",
+   "options": "Barcode"
   },
   {
    "fieldname": "articles",
@@ -89,7 +90,7 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-30 18:32:07.744410",
+ "modified": "2025-07-01 01:44:38.278399",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Colis",
@@ -110,5 +111,30 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Nouveau"
+  },
+  {
+   "color": "Cyan",
+   "title": "Pr\u00e9par\u00e9"
+  },
+  {
+   "color": "Orange",
+   "title": "Enlev\u00e9"
+  },
+  {
+   "color": "Green",
+   "title": "Livr\u00e9"
+  },
+  {
+   "color": "Red",
+   "title": "Non Livr\u00e9"
+  },
+  {
+   "color": "Gray",
+   "title": "Annul\u00e9"
+  }
+ ]
 }

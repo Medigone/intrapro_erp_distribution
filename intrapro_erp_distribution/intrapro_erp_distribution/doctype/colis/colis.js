@@ -3,8 +3,8 @@
 
 frappe.ui.form.on("Colis", {
 	refresh(frm) {
-		// Ajouter un bouton pour scanner les articles
-		frm.add_custom_button(__('Scanner Article'), function() {
+		// Ajouter un bouton pour scanner le code-barres des articles
+		frm.add_custom_button(__('Scanner Code-barres Article'), function() {
 			// Initialiser le scanner
 			const scanner = new frappe.ui.Scanner({
 				dialog: true, // Ouvrir le scanner dans une boîte de dialogue
@@ -15,28 +15,81 @@ frappe.ui.form.on("Colis", {
 				}
 			});
 		}, __('Actions'));
+		
+		// Ajouter un bouton pour régénérer le QR code
+		frm.add_custom_button(__('Régénérer QR Code'), function() {
+			frm.call({
+				doc: frm.doc,
+				method: 'generate_qr_code',
+				callback: function(r) {
+					frm.reload_doc();
+					frappe.show_alert({
+						message: __('QR Code régénéré avec succès'),
+						indicator: 'green'
+					}, 3);
+				}
+			});
+		}, __('Actions'));
+		
+		// Ajouter un bouton pour télécharger le QR code
+		if (frm.doc.name && frm.doc.name !== 'new-colis') {
+			frm.add_custom_button(__('Télécharger QR Code'), function() {
+				window.open(
+					frappe.urllib.get_full_url(
+						`/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.download_qr_code?docname=${frm.doc.name}`
+					),
+					'_blank'
+				);
+			}, __('Actions'));
+		}
+		
+		// Afficher le QR code dans le champ HTML s'il existe
+		if (frm.doc.image) {
+			frm.set_df_property('html', 'options', `
+				<div style="text-align: center; margin: 20px;">
+					<h3>QR Code du Colis</h3>
+					<img src="${frm.doc.image}" style="max-width: 200px; max-height: 200px;" />
+					<p>Scannez ce QR code pour identifier le colis</p>
+					<p><small>ID: ${frm.doc.name}</small></p>
+				</div>
+			`);
+		} else {
+			frm.set_df_property('html', 'options', `
+				<div style="text-align: center; margin: 20px;">
+					<p>Le QR code sera généré après la sauvegarde du document</p>
+				</div>
+			`);
+		}
 	},
+	
+	// Gérer l'événement de scan du code-barres via le champ scan_barcode
+	scan_barcode: function(frm) {
+		let scan_barcode_field = frm.fields_dict["scan_barcode"];
+		let input = scan_barcode_field.value;
+		
+		if (input) {
+			traiter_article_scanne(frm, input);
+			// Réinitialiser le champ après traitement
+			scan_barcode_field.set_value("");
+		}
+	}
 });
 
 /**
- * Traite un article scanné et l'ajoute à la table enfant 'articles'
+ * Traite un code-barres d'article scanné et ajoute l'article correspondant à la table enfant 'articles'
  * @param {Object} frm - L'objet formulaire Frappe
- * @param {String} code_barre - Le code-barres scanné
+ * @param {String} code_barre - Le code-barres de l'article scanné
  */
 function traiter_article_scanne(frm, code_barre) {
-	// Vérifier si le code-barres correspond à un article existant
+	// Utiliser la méthode serveur pour récupérer l'article à partir du code-barres
 	frappe.call({
-		method: 'frappe.client.get_list',
+		method: 'intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.get_item_from_barcode',
 		args: {
-			doctype: 'Item',
-			filters: {
-				barcode: code_barre
-			},
-			fields: ['name', 'item_name']
+			barcode: code_barre
 		},
 		callback: function(r) {
-			if (r.message && r.message.length > 0) {
-				const article = r.message[0];
+			if (r.message) {
+				const article = r.message;
 				
 				// Vérifier si l'article est déjà dans la table
 				let existe = false;
@@ -63,11 +116,14 @@ function traiter_article_scanne(frm, code_barre) {
 				// Rafraîchir la table
 				frm.refresh_field('articles');
 				
-				// Afficher un message de confirmation
-				frappe.show_alert({
-					message: __('Article {0} ajouté', [article.item_name || article.name]),
-					indicator: 'green'
-				}, 3);
+				// Sauvegarder le document après l'ajout de l'article
+				frm.save().then(() => {
+					// Afficher un message de confirmation
+					frappe.show_alert({
+						message: __('Article {0} ajouté', [article.item_name || article.name]),
+						indicator: 'green'
+					}, 3);
+				});
 			} else {
 				// Aucun article trouvé avec ce code-barres
 				frappe.show_alert({
