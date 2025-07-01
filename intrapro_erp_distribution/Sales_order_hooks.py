@@ -31,7 +31,7 @@ def create_delivery_note_from_sales_order(doc, method):
         delivery_note.currency = doc.currency
         delivery_note.selling_price_list = doc.selling_price_list
         delivery_note.conversion_rate = doc.conversion_rate
-        delivery_note.sales_order = doc.name
+        # Utiliser le champ standard 'against_sales_order' au niveau des items, pas 'sales_order'
         
         # Copier le champ personnalisé custom_type
         if hasattr(doc, 'custom_type'):
@@ -74,6 +74,11 @@ def create_delivery_note_from_sales_order(doc, method):
         # Sauvegarder comme brouillon
         delivery_note.flags.ignore_permissions = True
         delivery_note.insert()
+        
+        # S'assurer que le document est bien enregistré en base de données avant de continuer
+        frappe.db.commit()
+        
+        
         
         # Informer l'utilisateur
         custom_type_msg = ""
@@ -124,20 +129,8 @@ def cancel_linked_delivery_notes(doc, method):
             pluck="name"
         )
         
-        # Si aucun bon de livraison n'est trouvé, essayer avec un autre champ possible
-        if not submitted_delivery_notes and not draft_delivery_notes:
-            # Essayer avec le champ 'sales_order' s'il existe
-            submitted_delivery_notes = frappe.db.sql("""
-                SELECT name FROM `tabDelivery Note` 
-                WHERE sales_order = %s AND docstatus = 1
-            """, (doc.name,), as_dict=0)
-            submitted_delivery_notes = [d[0] for d in submitted_delivery_notes] if submitted_delivery_notes else []
-            
-            draft_delivery_notes = frappe.db.sql("""
-                SELECT name FROM `tabDelivery Note` 
-                WHERE sales_order = %s AND docstatus = 0
-            """, (doc.name,), as_dict=0)
-            draft_delivery_notes = [d[0] for d in draft_delivery_notes] if draft_delivery_notes else []
+        # Si aucun bon de livraison n'est trouvé, essayer avec les items directement
+        # Le champ 'sales_order' n'existe pas dans la table Delivery Note, on utilise uniquement 'against_sales_order'
         
         # Si toujours aucun bon de livraison n'est trouvé, essayer avec les items
         if not submitted_delivery_notes and not draft_delivery_notes:

@@ -43,7 +43,6 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -141,8 +140,13 @@ doc_events = {
         "validate": "intrapro_erp_distribution.intrapro_erp_distribution.doctype.transferts_marchandise.transferts_marchandise.validate_delivery_notes"
     },
     "Sales Order": {
-        "on_submit": "intrapro_erp_distribution.Sales_order_hooks.create_delivery_note_from_sales_order",
-        "on_cancel": "intrapro_erp_distribution.Sales_order_hooks.cancel_linked_delivery_notes"
+        "on_cancel": "intrapro_erp_distribution.Sales_order_hooks.cancel_linked_delivery_notes",
+        "on_submit": "intrapro_erp_distribution.Sales_order_hooks.create_delivery_note_from_sales_order"
+    },
+    "Colis": {
+        "validate": "intrapro_erp_distribution.delivery_note_hooks.validate_colis_quantities",
+        "on_trash": "intrapro_erp_distribution.delivery_note_hooks.on_trash_colis",
+        "after_delete": "intrapro_erp_distribution.delivery_note_hooks.after_delete_colis"
     }
 }
 
@@ -254,4 +258,26 @@ doc_events = {
 # template_apps = ['intrapro_erp_distribution', 'webshop']
 website_route_rules = [
     {"from_route": "/commande_detail/<name>", "to_route": "commande_detail"}
+]
+
+fixtures = [
+    #     {
+    #     "doctype": "Role",
+    #     "filters": [["is_custom", "=", 1]]  # Export uniquement les rôles custom
+    # },
+    # {
+    #     "doctype": "Custom DocPerm",
+    #     "filters": []  # Export uniquement les permissions personnalisées
+    # },
+    # "Server Script",
+    "Client Script",
+    # "Custom HTML Block",
+    # "Workflow",
+    # "Workflow State",
+    # "Workflow Transition",
+    # "Workflow Action",
+    # "Workflow Action Master",
+    # "Workflow Document State",
+    # "Workspace",
+    # "Role Profile",
 ]

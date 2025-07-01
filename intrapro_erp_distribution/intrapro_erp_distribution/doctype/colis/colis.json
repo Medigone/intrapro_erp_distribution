@@ -15,6 +15,7 @@
   "client",
   "column_break_tvzk",
   "bl",
+  "custom_numero_sequence",
   "section_break_anxd",
   "scan_barcode",
   "articles"
@@ -25,6 +26,12 @@
    "fieldtype": "Select",
    "label": "Statut",
    "options": "Nouveau\nPr\u00e9par\u00e9\nEnlev\u00e9\nLivr\u00e9\nNon Livr\u00e9\nAnnul\u00e9"
+  },
+  {
+   "fieldname": "custom_numero_sequence",
+   "fieldtype": "Data",
+   "label": "Numéro de séquence",
+   "description": "Format: X/Y où X est le numéro du colis et Y le nombre total de colis"
   },
   {
    "fieldname": "section_break_cshx",
@@ -90,7 +97,7 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-01 01:44:38.278399",
+ "modified": "2025-07-01 15:44:38.278399",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Colis",

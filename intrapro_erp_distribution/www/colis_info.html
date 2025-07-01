@@ -5,8 +5,7 @@
 {% block meta_block %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <meta name="description" content="Informations détaillées sur le colis {{ colis.name if colis else '' }} - {{ colis.client_name if colis else '' }}">
-<meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1e40af" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#3b82f6">
 {% endblock %}
 
 {% block head_include %}
@@ -14,7 +13,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
-    darkMode: 'class',
     theme: {
       extend: {
         colors: {
@@ -37,10 +35,7 @@
     font-family: 'Inter', sans-serif;
   }
   
-  /* Transition pour le mode sombre */
-  html, body, * {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  }
+
 
   /* Animations */
   @keyframes fadeIn {
@@ -107,17 +102,7 @@
     background: #a8a8a8;
   }
   
-  .dark ::-webkit-scrollbar-track {
-    background: #2d3748;
-  }
-  
-  .dark ::-webkit-scrollbar-thumb {
-    background: #4a5568;
-  }
-  
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: #718096;
-  }
+
   
   /* Style pour le bouton de mode sombre */
   .theme-toggle-btn {
@@ -130,13 +115,7 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   }
   
-  .dark .theme-toggle-btn {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  }
-  
-  .dark .theme-toggle-btn:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  }
+
   
   /* Styles pour l'impression */
   @media print {
@@ -154,18 +133,18 @@
       display: none !important;
     }
     
-    .bg-white, .dark\:bg-gray-800 {
+    .bg-white {
       background-color: white !important;
       color: black !important;
       border: none !important;
       box-shadow: none !important;
     }
     
-    .text-gray-800, .dark\:text-white, .text-gray-500, .dark\:text-gray-400 {
+    .text-gray-800, .text-gray-500 {
       color: black !important;
     }
     
-    .text-blue-600, .dark\:text-blue-400 {
+    .text-blue-600 {
       color: #2563eb !important;
     }
     
@@ -180,39 +159,9 @@
 </style>
 
 <script>
-  // Fonction pour afficher une notification
-  function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0 translate-y-4 ${type === 'info' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-white'}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    // Animation d'entrée
-    setTimeout(() => {
-      notification.classList.remove('opacity-0', 'translate-y-4');
-    }, 10);
-    
-    // Animation de sortie et suppression
-    setTimeout(() => {
-      notification.classList.add('opacity-0', 'translate-y-4');
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 300);
-    }, 3000);
-  }
+
   
-  // Fonction pour basculer le mode sombre
-  function toggleDarkMode() {
-    if (document.documentElement.classList.contains('dark')) {
-      document.documentElement.classList.remove('dark');
-      localStorage.theme = 'light';
-      showNotification('Mode clair activé');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.theme = 'dark';
-      showNotification('Mode sombre activé', 'dark');
-    }
-  }
+
   
   // Fonction pour partager la page
   function sharePackage() {
@@ -277,15 +226,8 @@
     }
   }
   
-  // Initialiser le mode selon la préférence enregistrée ou le système
+  // Initialiser la page
   document.addEventListener('DOMContentLoaded', function() {
-    // Appliquer le mode sombre si nécessaire
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
     // Masquer l'indicateur de chargement
     toggleLoading(false);
   });
@@ -329,23 +271,9 @@
 </div>
 
 <div class="fixed top-4 right-4 z-50 flex flex-col gap-3">
-  <!-- Bouton mode sombre -->
-  <div class="animate-float">
-    <button onclick="toggleDarkMode()" class="p-3 rounded-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg theme-toggle-btn">
-      <!-- Icône soleil (mode clair) - visible en mode sombre -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-      <!-- Icône lune (mode sombre) - visible en mode clair -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-      </svg>
-    </button>
-  </div>
-  
   <!-- Bouton imprimer -->
-  <div class="animate-float" style="animation-delay: 0.2s;">
-    <button onclick="window.print()" class="p-3 rounded-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg theme-toggle-btn print:hidden">
+  <div class="animate-float">
+    <button onclick="window.print()" class="p-3 rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300 shadow-lg theme-toggle-btn print:hidden">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
       </svg>
@@ -353,8 +281,8 @@
   </div>
   
   <!-- Bouton partager -->
-  <div class="animate-float" style="animation-delay: 0.3s;">
-    <button onclick="sharePackage()" class="p-3 rounded-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg theme-toggle-btn print:hidden">
+  <div class="animate-float" style="animation-delay: 0.2s;">
+    <button onclick="sharePackage()" class="p-3 rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300 shadow-lg theme-toggle-btn print:hidden">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
       </svg>
@@ -362,16 +290,16 @@
   </div>
 </div>
 
-<div class="container mx-auto py-8 px-4 animate-fadeIn dark:bg-gray-900 sm:px-6 lg:px-8">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 max-w-3xl mx-auto border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover-lift">
+<div class="container mx-auto py-8 px-4 animate-fadeIn sm:px-6 lg:px-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 max-w-3xl mx-auto border border-gray-100 transition-all duration-300 hover:shadow-xl hover-lift">
         <div class="text-center mb-8 animate-fadeIn" style="animation-delay: 0.1s;">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-full mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1">Colis <span class="text-blue-600 dark:text-blue-400">{{ colis.name }}</span></h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
+            <h1 class="text-3xl font-bold text-gray-800 mb-1">Colis<Br><span class="text-blue-600">{{ colis.name }}</span></h1>
+            <p class="text-sm text-gray-500 flex items-center justify-center gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -379,18 +307,18 @@
             </p>
         </div>
         
-        <div class="border-t border-b border-gray-200 dark:border-gray-700 py-6 my-6 rounded-lg bg-gray-50 dark:bg-gray-700 px-4 animate-fadeIn" style="animation-delay: 0.2s;">
+        <div class="border-t border-b border-gray-200 py-6 my-6 rounded-lg bg-gray-50 px-4 animate-fadeIn" style="animation-delay: 0.2s;">
             <div class="grid md:grid-cols-2 gap-6">
-                <div class="transition-all duration-300 hover:bg-white dark:hover:bg-gray-600 hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.1s);">
-                    <p class="text-gray-600 dark:text-gray-300 font-medium flex items-center gap-2">
+                <div class="transition-all duration-300 hover:bg-white hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.1s);">
+                    <p class="text-gray-600 font-medium flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                         Client:
                     </p>
-                    <p class="text-gray-800 dark:text-gray-200 font-semibold ml-7">{{ colis.client_name or colis.client or 'Non spécifié' }}</p>
+                    <p class="text-gray-800 font-semibold ml-7">{{ colis.client_name or colis.client or 'Non spécifié' }}</p>
                 </div>
-                <div class="transition-all duration-300 hover:bg-white dark:hover:bg-gray-600 hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.2s);">
+                <div class="transition-all duration-300 hover:bg-white hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.2s);">
                     <p class="text-gray-600 font-medium flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -399,7 +327,7 @@
                     </p>
                     <p class="text-gray-800 font-semibold ml-7">{{ frappe.utils.format_date(colis.date) if colis.date else 'Non spécifiée' }}</p>
                 </div>
-                <div class="transition-all duration-300 hover:bg-white dark:hover:bg-gray-600 hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.3s);">
+                <div class="transition-all duration-300 hover:bg-white hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.3s);">
                     <p class="text-gray-600 font-medium flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -421,8 +349,24 @@
                         </span>
                     </p>
                 </div>
+                {% if colis.custom_numero_sequence %}
+                <div class="transition-all duration-300 hover:bg-white hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.4s);">
+                    <p class="text-gray-600 font-medium flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                        </svg>
+                        Séquence:
+                    </p>
+                    <p class="text-gray-800 font-semibold ml-7">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                            <span class="w-2 h-2 rounded-full mr-2 bg-purple-500"></span>
+                            {{ colis.custom_numero_sequence }}
+                        </span>
+                    </p>
+                </div>
+                {% endif %}
                 {% if colis.bl %}
-                <div class="transition-all duration-300 hover:bg-white dark:hover:bg-gray-600 hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.4s);">
+                <div class="transition-all duration-300 hover:bg-white hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.5s);">
                     <p class="text-gray-600 font-medium flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -433,7 +377,7 @@
                 </div>
                 {% endif %}
                 {% if colis.description %}
-                <div class="col-span-2 transition-all duration-300 hover:bg-white dark:hover:bg-gray-600 hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.5s);">
+                <div class="col-span-2 transition-all duration-300 hover:bg-white hover:shadow p-3 rounded-lg animate-slideIn" style="animation-delay: calc(0.2s + 0.6s);">
                     <p class="text-gray-600 font-medium flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
@@ -449,25 +393,25 @@
         {% if colis.articles %}
         <div class="my-8 animate-fadeIn" style="animation-delay: 0.3s;">
             <div class="flex items-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
-                <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Articles</h2>
+                <h2 class="text-xl font-semibold text-gray-800">Articles</h2>
             </div>
-            <div class="overflow-hidden rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="overflow-hidden rounded-xl shadow-sm border border-gray-200">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white dark:bg-gray-800">
-                        <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Article</th>
-                                <th class="py-3 px-6 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Quantité</th>
+                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-3/4">Article</th>
+                                <th class="py-3 px-6 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Quantité</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody class="divide-y divide-gray-200">
                             {% for item in colis.articles %}
-                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 animate-fadeIn" style="animation-delay: {{ 0.3 + (loop.index0 * 0.1) }}s;">
-                                 <td class="py-4 px-6 text-sm font-medium text-gray-800 dark:text-gray-200">{{ item.article_name or item.article }}</td>
-                                 <td class="py-4 px-6 text-sm text-right text-gray-800">
+                             <tr class="hover:bg-gray-50 transition-colors duration-200 animate-fadeIn" style="animation-delay: {{ 0.3 + (loop.index0 * 0.1) }}s;">
+                                 <td class="py-4 px-6 text-sm font-medium text-gray-800 w-3/4">{{ item.article_name or item.article }}</td>
+                                 <td class="py-4 px-6 text-sm text-right text-gray-800 w-1/4">
                                      <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors duration-200">
                                          {{ item.quantite }}
                                      </span>
@@ -489,7 +433,7 @@
         {% endif %}
         
         {% if frappe.session.user != 'Guest' %}
-        <div class="mt-8 text-center animate-fadeIn dark:text-gray-200" style="animation-delay: 0.4s;">
+        <div class="mt-8 text-center animate-fadeIn" style="animation-delay: 0.4s;">
             <a href="/app/colis/{{ colis.name }}" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 animate-pulse-slow">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -501,19 +445,19 @@
         
         <!-- Bouton retour en haut de page -->
 <div id="back-to-top" class="fixed bottom-4 right-4 z-50 opacity-0 invisible transition-all duration-300 print:hidden">
-  <button onclick="scrollToTop()" class="p-3 rounded-full bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg theme-toggle-btn">
+  <button onclick="scrollToTop()" class="p-3 rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300 shadow-lg theme-toggle-btn">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
     </svg>
   </button>
 </div>
 
-<div class="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400 animate-fadeIn" style="animation-delay: 0.5s;">
+<div class="mt-10 pt-6 border-t border-gray-200 text-center text-sm text-gray-500 animate-fadeIn" style="animation-delay: 0.5s;">
             <div class="flex flex-col items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
                 </svg>
-                <p class="font-medium">IntraPro ERP Distribution</p>
+                <p class="font-medium">IntraPro ERP</p>
                 
             </div>
         </div>
