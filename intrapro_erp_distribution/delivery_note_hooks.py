@@ -74,6 +74,10 @@ def create_colis(delivery_note_name):
             row = colis.append("articles", {})
             row.article  = item.item_code
             row.quantite = remaining
+            row.quantite_totale = remaining  # Initialiser quantite_totale
+            row.quantite_livree = 0  # Initialiser quantite_livree
+            row.quantite_restante = remaining  # Initialiser quantite_restante
+            row.statut_article = "En attente"  # Initialiser statut_article
             row.description = item.get("description")
 
     colis.insert(ignore_permissions=True)

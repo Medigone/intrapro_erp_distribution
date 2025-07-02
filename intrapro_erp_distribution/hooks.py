@@ -184,6 +184,11 @@ doc_events = {
 
 # before_tests = "intrapro_erp_distribution.install.before_tests"
 
+# Custom Commands
+# ---------------
+
+# Custom bench commands
+
 # Overriding Methods
 # ------------------------------
 #

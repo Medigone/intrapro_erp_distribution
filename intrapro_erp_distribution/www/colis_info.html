@@ -102,18 +102,81 @@
     background: #a8a8a8;
   }
   
+  /* Gestion responsive des vues */
+  @media (min-width: 768px) {
+    .mobile-view {
+      display: none !important;
+    }
+    .desktop-view {
+      display: block !important;
+    }
+  }
+  
+  @media (max-width: 767px) {
+    .desktop-view {
+      display: none !important;
+    }
+    .mobile-view {
+      display: block !important;
+    }
+  }
+  
+  /* Améliorations pour mobile */
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Cartes d'articles optimisées pour mobile */
+    .mobile-article-card {
+      transition: all 0.3s ease;
+      touch-action: manipulation;
+    }
+    
+    .mobile-article-card:active {
+      transform: scale(0.98);
+    }
+    
+    /* Boutons optimisés pour le tactile */
+    .mobile-action-btn {
+      min-height: 44px;
+      min-width: 44px;
+      touch-action: manipulation;
+    }
+    
+    /* Input optimisé pour mobile */
+    .mobile-qty-input {
+      font-size: 16px; /* Évite le zoom sur iOS */
+    }
+    
+    /* Grille de quantités responsive */
+    .quantity-grid {
+      gap: 0.5rem;
+    }
+    
+    .quantity-item {
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
+  
+  /* Animations spécifiques pour les mises à jour */
+  .update-highlight {
+    animation: updatePulse 2s ease-in-out;
+  }
+  
+  @keyframes updatePulse {
+    0% { background-color: #f0f9ff; transform: scale(1); }
+    50% { background-color: #dbeafe; transform: scale(1.02); }
+    100% { background-color: transparent; transform: scale(1); }
+  }
+  
 
   
-  /* Style pour le bouton de mode sombre */
-  .theme-toggle-btn {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-  
-  .theme-toggle-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-  }
+
   
 
   
@@ -129,9 +192,7 @@
       max-width: 100% !important;
     }
     
-    .print:hidden {
-      display: none !important;
-    }
+
     
     .bg-white {
       background-color: white !important;
@@ -159,57 +220,11 @@
 </style>
 
 <script>
-
+  // Initialiser les variables Frappe nécessaires
+  window.frappe = window.frappe || {};
+  frappe.csrf_token = '{{ frappe.session.csrf_token }}';
   
 
-  
-  // Fonction pour partager la page
-  function sharePackage() {
-    const colisId = '{{ colis.name }}';
-    const colisClient = '{{ colis.client_name or colis.client or "Non spécifié" }}';
-    const shareTitle = `Colis ${colisId} - ${colisClient}`;
-    const shareUrl = window.location.href;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: shareTitle,
-        text: `Informations sur le colis ${colisId} pour ${colisClient}`,
-        url: shareUrl
-      })
-      .then(() => showNotification('Colis partagé avec succès'))
-      .catch(error => {
-        console.error('Erreur lors du partage:', error);
-        copyToClipboard(shareUrl);
-      });
-    } else {
-      copyToClipboard(shareUrl);
-    }
-  }
-  
-  // Fonction pour copier dans le presse-papier
-  function copyToClipboard(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        showNotification('Lien copié dans le presse-papier');
-      } else {
-        showNotification('Impossible de copier le lien', 'error');
-      }
-    } catch (err) {
-      console.error('Erreur lors de la copie:', err);
-      showNotification('Impossible de copier le lien', 'error');
-    }
-    
-    document.body.removeChild(textArea);
-  }
   
   // Fonction pour afficher/masquer l'indicateur de chargement
   function toggleLoading(show) {
@@ -226,10 +241,960 @@
     }
   }
   
+  // Fonction pour afficher une notification
+  function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-[200] px-6 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+      type === 'success' ? 'bg-green-500 text-white' : 
+      type === 'error' ? 'bg-red-500 text-white' : 
+      'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Animation d'entrée
+    setTimeout(() => {
+      notification.style.transform = 'translate(-50%, 0)';
+    }, 100);
+    
+    // Suppression automatique après 3 secondes
+    setTimeout(() => {
+      notification.style.transform = 'translate(-50%, -100%)';
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
+  }
+  
+  // Fonction pour afficher un dialogue de confirmation
+  function showConfirmDialog(message, onConfirm, onCancel) {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-[300] flex items-center justify-center p-4';
+    
+    const dialog = document.createElement('div');
+    dialog.className = 'bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform scale-95 transition-transform duration-200';
+    
+    dialog.innerHTML = `
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+          <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Confirmation</h3>
+        <p class="text-sm text-gray-500 mb-6">${message}</p>
+        <div class="flex gap-3 justify-center">
+          <button id="cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+            Annuler
+          </button>
+          <button id="confirm-btn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+            Confirmer
+          </button>
+        </div>
+      </div>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    // Animation d'entrée
+    setTimeout(() => {
+      dialog.style.transform = 'scale(1)';
+    }, 50);
+    
+    // Gestionnaires d'événements
+    const confirmBtn = dialog.querySelector('#confirm-btn');
+    const cancelBtn = dialog.querySelector('#cancel-btn');
+    
+    const closeDialog = () => {
+      overlay.style.opacity = '0';
+      dialog.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+      }, 200);
+    };
+    
+    confirmBtn.addEventListener('click', () => {
+      closeDialog();
+      if (onConfirm) onConfirm();
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      closeDialog();
+      if (onCancel) onCancel();
+    });
+    
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeDialog();
+        if (onCancel) onCancel();
+      }
+    });
+  }
+  
+  // Variables globales pour stocker les actions disponibles
+  let availableActions = {
+    status_actions: {
+      can_set_nouveau: false,
+      can_set_prepare: false,
+      can_set_enleve: false,
+      can_set_livre: false,
+      can_cancel: false,
+      can_mark_not_delivered: false
+    },
+    article_actions: {
+      can_deliver_articles: false,
+      delivery_message: null
+    },
+    current_status: '{{ colis.status }}',
+    allowed_next_statuses: []
+  };
+  
+  // Fonction pour récupérer les actions disponibles depuis le backend
+  function fetchAvailableActions() {
+    const colisId = '{{ colis.name }}';
+    
+    fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.get_available_actions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        availableActions = data.message;
+        updateUIBasedOnAvailableActions();
+      }
+    })
+    .catch(error => {
+      console.error('Erreur lors de la récupération des actions disponibles:', error);
+    });
+  }
+  
+  // Fonction pour mettre à jour l'interface utilisateur en fonction des actions disponibles
+  function updateUIBasedOnAvailableActions() {
+    // Mise à jour des boutons de statut
+    updateStatusButtons();
+    
+    // Mise à jour des boutons d'action sur les articles
+    updateArticleActionButtons();
+    
+    // Mise à jour du bouton 'Tout Livrer'
+    updateDeliverAllButton();
+  }
+  
+  // Fonction pour mettre à jour les boutons de statut
+  function updateStatusButtons() {
+    const actions = availableActions.status_actions;
+    
+    // Boutons de statut global
+    toggleButtonVisibility('btn-nouveau', actions.can_set_nouveau);
+    toggleButtonVisibility('btn-prepare', actions.can_set_prepare);
+    toggleButtonVisibility('btn-enleve', actions.can_set_enleve);
+    toggleButtonVisibility('btn-livre', actions.can_set_livre);
+    toggleButtonVisibility('btn-cancel', actions.can_cancel);
+    toggleButtonVisibility('btn-not-delivered', actions.can_mark_not_delivered);
+  }
+  
+  // Fonction pour mettre à jour les boutons d'action sur les articles
+  function updateArticleActionButtons() {
+    const canDeliverArticles = availableActions.article_actions && availableActions.article_actions.can_deliver_articles;
+    const deliveryMessage = availableActions.article_actions && availableActions.article_actions.delivery_message;
+    
+    // Mettre à jour chaque ligne d'article individuellement
+    const articleRows = document.querySelectorAll('tbody tr');
+    articleRows.forEach(row => {
+      // Trouver les boutons dans cette ligne
+      const deliverPartialBtn = row.querySelector('.btn-deliver-partial');
+      const deliverAllBtn = row.querySelector('.btn-deliver-all');
+      
+      if (deliverPartialBtn || deliverAllBtn) {
+        // Extraire le nom de l'article depuis les boutons onclick
+        let articleName = null;
+        if (deliverPartialBtn && deliverPartialBtn.getAttribute('onclick')) {
+          const onclickAttr = deliverPartialBtn.getAttribute('onclick');
+          const match = onclickAttr.match(/deliverPartialQuantity\('([^']+)'\)/);
+          if (match) articleName = match[1];
+        } else if (deliverAllBtn && deliverAllBtn.getAttribute('onclick')) {
+          const onclickAttr = deliverAllBtn.getAttribute('onclick');
+          const match = onclickAttr.match(/deliverRemainingQuantity\('([^']+)'\)/);
+          if (match) articleName = match[1];
+        }
+        
+        if (articleName) {
+          // Vérifier le statut de l'article et la quantité restante
+          const statusDot = row.querySelector('.w-2.h-2');
+          const remainingQtyCell = row.querySelector('td:nth-child(4)');
+          const remainingQty = remainingQtyCell ? parseInt(remainingQtyCell.textContent.trim()) : 0;
+          
+          // Déterminer si les boutons doivent être visibles
+          const canShowButtons = canDeliverArticles && remainingQty > 0;
+          
+          // Mettre à jour la visibilité des boutons
+          if (deliverPartialBtn) {
+            if (canShowButtons) {
+              deliverPartialBtn.classList.remove('hidden');
+              deliverPartialBtn.removeAttribute('disabled');
+            } else {
+              deliverPartialBtn.classList.add('hidden');
+              deliverPartialBtn.setAttribute('disabled', 'disabled');
+            }
+          }
+          
+          if (deliverAllBtn) {
+            if (canShowButtons) {
+              deliverAllBtn.classList.remove('hidden');
+              deliverAllBtn.removeAttribute('disabled');
+            } else {
+              deliverAllBtn.classList.add('hidden');
+              deliverAllBtn.setAttribute('disabled', 'disabled');
+            }
+          }
+        }
+      }
+    });
+    
+    // Mettre à jour les boutons mobiles
+    const mobileCards = document.querySelectorAll('.mobile-article-card');
+    mobileCards.forEach(card => {
+      const deliverPartialBtn = card.querySelector('.btn-mobile-deliver-partial');
+      const deliverAllBtn = card.querySelector('.btn-mobile-deliver-all');
+      
+      if (deliverPartialBtn || deliverAllBtn) {
+        // Extraire le nom de l'article
+        let articleName = null;
+        if (deliverPartialBtn && deliverPartialBtn.getAttribute('onclick')) {
+          const onclickAttr = deliverPartialBtn.getAttribute('onclick');
+          const match = onclickAttr.match(/deliverPartialQuantityMobile\('([^']+)'\)/);
+          if (match) articleName = match[1];
+        } else if (deliverAllBtn && deliverAllBtn.getAttribute('onclick')) {
+          const onclickAttr = deliverAllBtn.getAttribute('onclick');
+          const match = onclickAttr.match(/deliverRemainingQuantity\('([^']+)'\)/);
+          if (match) articleName = match[1];
+        }
+        
+        if (articleName) {
+          // Vérifier la quantité restante dans la carte mobile
+          const remainingQtyElement = card.querySelector('.text-lg.font-bold');
+          const remainingQty = remainingQtyElement ? parseInt(remainingQtyElement.textContent.trim()) : 0;
+          
+          // Déterminer si les boutons doivent être visibles
+          const canShowButtons = canDeliverArticles && remainingQty > 0;
+          
+          // Mettre à jour la visibilité des boutons
+          if (deliverPartialBtn) {
+            if (canShowButtons) {
+              deliverPartialBtn.classList.remove('hidden');
+              deliverPartialBtn.removeAttribute('disabled');
+            } else {
+              deliverPartialBtn.classList.add('hidden');
+              deliverPartialBtn.setAttribute('disabled', 'disabled');
+            }
+          }
+          
+          if (deliverAllBtn) {
+            if (canShowButtons) {
+              deliverAllBtn.classList.remove('hidden');
+              deliverAllBtn.removeAttribute('disabled');
+            } else {
+              deliverAllBtn.classList.add('hidden');
+              deliverAllBtn.setAttribute('disabled', 'disabled');
+            }
+          }
+        }
+      }
+    });
+    
+    // Afficher ou masquer les messages d'information
+    const deliveryMessageElements = document.querySelectorAll('.delivery-message');
+    deliveryMessageElements.forEach(element => {
+      if (deliveryMessage && !canDeliverArticles) {
+        element.textContent = deliveryMessage;
+        element.classList.remove('hidden');
+      } else {
+        element.classList.add('hidden');
+      }
+    });
+  }
+  
+  // Fonction pour mettre à jour le bouton 'Tout Livrer'
+  function updateDeliverAllButton() {
+    const canDeliverArticles = availableActions.article_actions && availableActions.article_actions.can_deliver_articles;
+    
+    // Récupérer le statut actuel depuis l'élément de statut dans la page
+    const statusElement = document.querySelector('.status-badge, .bg-yellow-100, .bg-blue-100, .bg-green-100, .bg-red-100');
+    let currentStatus = 'Nouveau';
+    if (statusElement) {
+      const statusText = statusElement.textContent.trim();
+      currentStatus = statusText;
+    }
+    
+    // Vérifier s'il y a des articles avec quantité restante > 0
+    let hasDeliverableArticles = false;
+    const articleRows = document.querySelectorAll('tbody tr');
+    articleRows.forEach(row => {
+      const remainingQtyCell = row.querySelector('td:nth-child(4)');
+      if (remainingQtyCell) {
+        const remainingQty = parseInt(remainingQtyCell.textContent.trim());
+        if (remainingQty > 0) {
+          hasDeliverableArticles = true;
+        }
+      }
+    });
+    
+    // Le bouton 'Tout Livrer' est visible seulement si :
+    // 1. Le colis est au statut 'Enlevé' OU 'Partiellement Livré'
+    // 2. Il y a des articles qui peuvent être livrés
+    // 3. Il y a effectivement des articles avec quantité restante
+    const showDeliverAll = (currentStatus === 'Enlevé' || currentStatus === 'Partiellement Livré') && canDeliverArticles && hasDeliverableArticles;
+    
+    toggleButtonVisibility('btn-deliver-all', showDeliverAll);
+  }
+  
+  // Fonction utilitaire pour basculer la visibilité d'un bouton
+  function toggleButtonVisibility(buttonId, isVisible) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      if (isVisible) {
+        button.classList.remove('hidden');
+        button.removeAttribute('disabled');
+      } else {
+        button.classList.add('hidden');
+        button.setAttribute('disabled', 'disabled');
+      }
+    }
+  }
+  
+  // Fonction générique pour changer le statut
+  function changeStatus(statusMethod, statusName) {
+    const colisId = '{{ colis.name }}';
+    
+    fetch(`/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.${statusMethod}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId,
+        confirm: false
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message && data.message.require_confirmation) {
+        showConfirmDialog(
+          data.message.message,
+          () => {
+            fetch(`/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.${statusMethod}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+              },
+              body: JSON.stringify({
+                docname: colisId,
+                confirm: true
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.message && data.message.success) {
+                showNotification(data.message.message, 'success');
+                // Mettre à jour les actions disponibles au lieu de recharger la page
+                setTimeout(() => {
+                  fetchAvailableActions();
+                }, 500);
+              } else {
+                showNotification(data.message?.message || 'Erreur lors de la mise à jour', 'error');
+              }
+            })
+            .catch(error => {
+              console.error('Erreur:', error);
+              showNotification('Erreur de connexion', 'error');
+            });
+          }
+        );
+      } else {
+        showNotification(data.message?.message || `Impossible de changer le statut vers ${statusName}`, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+      showNotification('Erreur de connexion', 'error');
+    });
+  }
+  
+  // Fonctions spécifiques pour chaque statut
+  function setStatusNouveau() {
+    changeStatus('set_status_nouveau', 'Nouveau');
+  }
+  
+  function setStatusPrepare() {
+    changeStatus('set_status_prepare', 'Préparé');
+  }
+  
+  function setStatusEnleve() {
+    changeStatus('set_status_enleve', 'Enlevé');
+  }
+  
+  function setStatusLivre() {
+    changeStatus('set_status_livre', 'Livré');
+  }
+  
+  // Fonction pour annuler le colis
+  function cancelPackage() {
+    const colisId = '{{ colis.name }}';
+    
+    fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.set_status_cancelled', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId,
+        confirm: false
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message && data.message.require_confirmation) {
+        showConfirmDialog(
+          data.message.message,
+          () => {
+            fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.set_status_cancelled', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+              },
+              body: JSON.stringify({
+                docname: colisId,
+                confirm: true
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.message && data.message.success) {
+                showNotification(data.message.message, 'success');
+                // Mettre à jour les actions disponibles au lieu de recharger la page
+                setTimeout(() => {
+                  fetchAvailableActions();
+                }, 500);
+              } else {
+                showNotification(data.message?.message || 'Erreur lors de l\'annulation', 'error');
+              }
+            })
+            .catch(error => {
+              console.error('Erreur:', error);
+              showNotification('Erreur de connexion', 'error');
+            });
+          }
+        );
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+      showNotification('Erreur de connexion', 'error');
+    });
+  }
+  
+  // Fonction pour marquer comme non livré
+  function markNotDelivered() {
+    const colisId = '{{ colis.name }}';
+    
+    fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.set_status_not_delivered', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId,
+        confirm: false
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message && data.message.require_confirmation) {
+        showConfirmDialog(
+          data.message.message,
+          () => {
+            fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.set_status_not_delivered', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+              },
+              body: JSON.stringify({
+                docname: colisId,
+                confirm: true
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.message && data.message.success) {
+                showNotification(data.message.message, 'success');
+                // Mettre à jour les actions disponibles au lieu de recharger la page
+                setTimeout(() => {
+                  fetchAvailableActions();
+                }, 500);
+              } else {
+                showNotification(data.message?.message || 'Erreur lors de la mise à jour', 'error');
+              }
+            })
+            .catch(error => {
+              console.error('Erreur:', error);
+              showNotification('Erreur de connexion', 'error');
+            });
+          }
+        );
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+      showNotification('Erreur de connexion', 'error');
+    });
+  }
+  
+  // Nouvelles fonctions pour la livraison partielle
+  function deliverPartialQuantity(articleName) {
+    const quantityInput = document.getElementById(`qty_${articleName}`);
+    const quantity = parseInt(quantityInput.value);
+    
+    if (!quantity || quantity <= 0) {
+      showNotification('Veuillez saisir une quantité valide', 'error');
+      return;
+    }
+    
+    showConfirmDialog(
+      `Êtes-vous sûr de vouloir livrer ${quantity} unités de cet article ?`,
+      function() {
+        deliverArticleQuantity(articleName, quantity);
+      }
+    );
+  }
+  
+  // Fonction pour la livraison partielle depuis la vue mobile
+  function deliverPartialQuantityMobile(articleName) {
+    const quantityInput = document.getElementById(`qty_mobile_${articleName}`);
+    const quantity = parseInt(quantityInput.value);
+    
+    if (!quantity || quantity <= 0) {
+      showNotification('Veuillez saisir une quantité valide', 'error');
+      return;
+    }
+    
+    showConfirmDialog(
+      `Êtes-vous sûr de vouloir livrer ${quantity} unités de cet article ?`,
+      function() {
+        deliverArticleQuantity(articleName, quantity);
+      }
+    );
+  }
+  
+  function deliverRemainingQuantity(articleName) {
+    showConfirmDialog(
+      'Êtes-vous sûr de vouloir livrer toute la quantité restante de cet article ?',
+      function() {
+        deliverArticleRemaining(articleName);
+      }
+    );
+  }
+  
+  function markArticleUndeliverable(articleName) {
+    showConfirmDialog(
+      'Êtes-vous sûr de vouloir marquer cet article comme non livrable ?',
+      function() {
+        markArticleAsUndeliverable(articleName);
+      }
+    );
+  }
+  
+  function deliverArticleQuantity(articleName, quantity) {
+    toggleLoading(true);
+    const colisId = '{{ colis.name }}';
+    
+    fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.deliver_article_quantity', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId,
+        article_name: articleName,
+        quantity: quantity,
+        confirm: true
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      toggleLoading(false);
+      
+      if (data.message && data.message.success) {
+        showNotification(data.message.message, 'success');
+        // Mettre à jour dynamiquement la table au lieu de recharger la page
+        updateArticleRow(articleName, data.message.article_data);
+        // Mettre à jour les actions disponibles
+        fetchAvailableActions();
+      } else {
+        const errorMsg = data.message ? data.message.message : 'Erreur lors de la livraison partielle';
+        showNotification(errorMsg, 'error');
+      }
+    })
+    .catch(error => {
+      toggleLoading(false);
+      console.error('Erreur:', error);
+      showNotification('Erreur de communication avec le serveur', 'error');
+    });
+  }
+  
+  // Fonction pour mettre à jour dynamiquement une ligne d'article
+  function updateArticleRow(articleName, articleData) {
+    if (!articleData) {
+      console.error('Aucune donnée d\'article fournie pour la mise à jour');
+      return;
+    }
+    
+    // Mettre à jour la vue desktop (tableau)
+    updateDesktopRow(articleName, articleData);
+    
+    // Mettre à jour la vue mobile (cartes)
+    updateMobileCard(articleName, articleData);
+  }
+  
+  // Fonction pour mettre à jour la ligne du tableau desktop
+  function updateDesktopRow(articleName, articleData) {
+    // Trouver la ligne correspondante dans le tableau
+    const rows = document.querySelectorAll('tbody tr');
+    let targetRow = null;
+    
+    rows.forEach(row => {
+      const buttons = row.querySelectorAll('button[onclick*="' + articleName + '"]');
+      if (buttons.length > 0) {
+        targetRow = row;
+      }
+    });
+    
+    if (!targetRow) {
+      console.log('Ligne d\'article non trouvée dans le tableau desktop:', articleName);
+      return;
+    }
+    
+    // Mettre à jour le statut
+    const statusCell = targetRow.children[1];
+    const statusSpan = statusCell.querySelector('span');
+    if (statusSpan) {
+      statusSpan.textContent = articleData.statut_article || 'En attente';
+      
+      // Mettre à jour les classes CSS du statut
+      statusSpan.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+      if (articleData.statut_article === 'Livré') {
+        statusSpan.className += ' bg-green-100 text-green-800';
+      } else if (articleData.statut_article === 'Partiellement livré') {
+        statusSpan.className += ' bg-yellow-100 text-yellow-800';
+      } else if (articleData.statut_article === 'Non livré') {
+        statusSpan.className += ' bg-red-100 text-red-800';
+      } else {
+        statusSpan.className += ' bg-blue-100 text-blue-800';
+      }
+    }
+    
+    // Mettre à jour l'indicateur de statut dans la première colonne
+    const nameCell = targetRow.children[0];
+    const statusDot = nameCell.querySelector('.w-2.h-2');
+    if (statusDot) {
+      statusDot.className = 'w-2 h-2 rounded-full mr-3';
+      if (articleData.statut_article === 'Livré') {
+        statusDot.className += ' bg-green-500';
+      } else if (articleData.statut_article === 'Partiellement livré') {
+        statusDot.className += ' bg-yellow-500';
+      } else if (articleData.statut_article === 'Non livré') {
+        statusDot.className += ' bg-red-500';
+      } else {
+        statusDot.className += ' bg-blue-500';
+      }
+    }
+    
+    // Mettre à jour la quantité livrée
+    const deliveredCell = targetRow.children[3];
+    deliveredCell.textContent = articleData.quantite_livree || 0;
+    
+    // Mettre à jour la quantité restante
+    const remainingCell = targetRow.children[4];
+    const remaining = articleData.quantite_restante || 0;
+    remainingCell.textContent = remaining;
+    
+    // Mettre à jour les actions
+    const actionsCell = targetRow.children[5];
+    if (remaining <= 0 || articleData.statut_article === 'Non livré') {
+      // Remplacer les boutons par un texte de statut
+      let statusText = 'Aucune action';
+      if (articleData.statut_article === 'Non livré') {
+        statusText = 'Non livrable';
+      } else if (remaining <= 0) {
+        statusText = 'Terminé';
+      }
+      
+      actionsCell.innerHTML = `<span class="text-xs text-gray-500">${statusText}</span>`;
+    } else {
+      // Mettre à jour la valeur max de l'input de quantité
+      const qtyInput = actionsCell.querySelector(`input[id="qty_${articleName}"]`);
+      if (qtyInput) {
+        qtyInput.max = remaining;
+        qtyInput.value = Math.min(parseInt(qtyInput.value) || 1, remaining);
+      }
+    }
+    
+    // Ajouter un effet visuel pour indiquer la mise à jour
+    targetRow.style.backgroundColor = '#f0f9ff';
+    setTimeout(() => {
+      targetRow.style.backgroundColor = '';
+    }, 2000);
+  }
+  
+  // Fonction pour mettre à jour la carte mobile
+  function updateMobileCard(articleName, articleData) {
+    // Trouver la carte correspondante
+    const mobileCards = document.querySelectorAll('.md\\:hidden .space-y-4 > div');
+    let targetCard = null;
+    
+    mobileCards.forEach(card => {
+      const buttons = card.querySelectorAll('button[onclick*="' + articleName + '"]');
+      if (buttons.length > 0) {
+        targetCard = card;
+      }
+    });
+    
+    if (!targetCard) {
+      console.log('Carte d\'article non trouvée dans la vue mobile:', articleName);
+      return;
+    }
+    
+    const remaining = articleData.quantite_restante || 0;
+    
+    // Mettre à jour l'indicateur de statut (point coloré)
+    const statusDot = targetCard.querySelector('.w-3.h-3');
+    if (statusDot) {
+      statusDot.className = 'w-3 h-3 rounded-full mr-2';
+      if (articleData.statut_article === 'Livré') {
+        statusDot.className += ' bg-green-500';
+      } else if (articleData.statut_article === 'Partiellement livré') {
+        statusDot.className += ' bg-yellow-500';
+      } else if (articleData.statut_article === 'Non livré') {
+        statusDot.className += ' bg-red-500';
+      } else {
+        statusDot.className += ' bg-blue-500';
+      }
+    }
+    
+    // Mettre à jour le badge de statut
+    const statusBadge = targetCard.querySelector('span.inline-flex');
+    if (statusBadge) {
+      statusBadge.textContent = articleData.statut_article || 'En attente';
+      
+      statusBadge.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium';
+      if (articleData.statut_article === 'Livré') {
+        statusBadge.className += ' bg-green-100 text-green-800';
+      } else if (articleData.statut_article === 'Partiellement livré') {
+        statusBadge.className += ' bg-yellow-100 text-yellow-800';
+      } else if (articleData.statut_article === 'Non livré') {
+        statusBadge.className += ' bg-red-100 text-red-800';
+      } else {
+        statusBadge.className += ' bg-blue-100 text-blue-800';
+      }
+    }
+    
+    // Mettre à jour les quantités dans la grille
+    const quantityDivs = targetCard.querySelectorAll('.grid.grid-cols-3 > div');
+    if (quantityDivs.length >= 3) {
+      // Quantité livrée (2ème colonne)
+      const deliveredDiv = quantityDivs[1].querySelector('.text-lg.font-bold');
+      if (deliveredDiv) {
+        deliveredDiv.textContent = articleData.quantite_livree || 0;
+      }
+      
+      // Quantité restante (3ème colonne)
+      const remainingDiv = quantityDivs[2].querySelector('.text-lg.font-bold');
+      if (remainingDiv) {
+        remainingDiv.textContent = remaining;
+      }
+    }
+    
+    // Mettre à jour la section des actions
+    const actionsSection = targetCard.querySelector('.space-y-3') || targetCard.querySelector('.text-center.py-3');
+    if (actionsSection) {
+      if (remaining <= 0 || articleData.statut_article === 'Non livré') {
+        // Remplacer par un message de statut
+        let statusText = '⏸️ Aucune action';
+        if (articleData.statut_article === 'Non livré') {
+          statusText = '❌ Non livrable';
+        } else if (remaining <= 0) {
+          statusText = '✅ Terminé';
+        }
+        
+        actionsSection.outerHTML = `
+          <div class="text-center py-3 bg-gray-50 rounded-lg">
+            <span class="text-sm text-gray-500 font-medium">${statusText}</span>
+          </div>
+        `;
+      } else {
+        // Mettre à jour la valeur max de l'input mobile
+        const qtyInput = targetCard.querySelector(`input[id="qty_mobile_${articleName}"]`);
+        if (qtyInput) {
+          qtyInput.max = remaining;
+          qtyInput.value = Math.min(parseInt(qtyInput.value) || 1, remaining);
+        }
+      }
+    }
+    
+    // Ajouter un effet visuel pour indiquer la mise à jour
+    targetCard.classList.add('update-highlight');
+    setTimeout(() => {
+      targetCard.classList.remove('update-highlight');
+    }, 2000);
+  }
+  
+  function deliverArticleRemaining(articleName) {
+    toggleLoading(true);
+    const colisId = '{{ colis.name }}';
+    
+    fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.deliver_article_remaining', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId,
+        article_name: articleName,
+        confirm: true
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      toggleLoading(false);
+      
+      if (data.message && data.message.success) {
+        showNotification(data.message.message, 'success');
+        // Mettre à jour dynamiquement la table au lieu de recharger la page
+        updateArticleRow(articleName, data.message.article_data);
+        // Mettre à jour les actions disponibles
+        fetchAvailableActions();
+      } else {
+        const errorMsg = data.message ? data.message.message : 'Erreur lors de la livraison complète';
+        showNotification(errorMsg, 'error');
+      }
+    })
+    .catch(error => {
+      toggleLoading(false);
+      console.error('Erreur:', error);
+      showNotification('Erreur de communication avec le serveur', 'error');
+    });
+  }
+  
+  function markArticleAsUndeliverable(articleName) {
+    toggleLoading(true);
+    const colisId = '{{ colis.name }}';
+    
+    fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.mark_article_undeliverable', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId,
+        article_name: articleName,
+        reason: 'Marqué comme non livrable depuis l\'interface web',
+        confirm: true
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      toggleLoading(false);
+      
+      if (data.message && data.message.success) {
+        showNotification(data.message.message, 'success');
+        // Mettre à jour dynamiquement la table au lieu de recharger la page
+        updateArticleRow(articleName, data.message.article_data);
+        // Mettre à jour les actions disponibles
+        fetchAvailableActions();
+      } else {
+        const errorMsg = data.message ? data.message.message : 'Erreur lors du marquage non livrable';
+        showNotification(errorMsg, 'error');
+      }
+    })
+    .catch(error => {
+      toggleLoading(false);
+      console.error('Erreur:', error);
+      showNotification('Erreur de communication avec le serveur', 'error');
+    });
+  }
+  
+  // Fonction pour livrer tous les articles restants
+  function deliverAllArticles() {
+    showConfirmDialog(
+      'Êtes-vous sûr de vouloir livrer tous les articles restants de ce colis ?',
+      function() {
+        executeDeliverAllArticles();
+      }
+    );
+  }
+  
+  function executeDeliverAllArticles() {
+    toggleLoading(true);
+    const colisId = '{{ colis.name }}';
+    
+    fetch('/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.deliver_all_articles', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        docname: colisId,
+        confirm: true
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      toggleLoading(false);
+      
+      if (data.message && data.message.success) {
+        showNotification(data.message.message, 'success');
+        // Recharger la page pour refléter tous les changements
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        const errorMsg = data.message ? data.message.message : 'Erreur lors de la livraison de tous les articles';
+        showNotification(errorMsg, 'error');
+      }
+    })
+    .catch(error => {
+      toggleLoading(false);
+      console.error('Erreur:', error);
+      showNotification('Erreur de communication avec le serveur', 'error');
+    });
+  }
+  
   // Initialiser la page
   document.addEventListener('DOMContentLoaded', function() {
     // Masquer l'indicateur de chargement
     toggleLoading(false);
+    
+    // Récupérer et appliquer les actions disponibles
+    fetchAvailableActions();
   });
   
   // Afficher l'indicateur de chargement au début
@@ -270,26 +1235,60 @@
   </div>
 </div>
 
-<div class="fixed top-4 right-4 z-50 flex flex-col gap-3">
-  <!-- Bouton imprimer -->
-  <div class="animate-float">
-    <button onclick="window.print()" class="p-3 rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300 shadow-lg theme-toggle-btn print:hidden">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-      </svg>
-    </button>
-  </div>
-  
-  <!-- Bouton partager -->
-  <div class="animate-float" style="animation-delay: 0.2s;">
-    <button onclick="sharePackage()" class="p-3 rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-all duration-300 shadow-lg theme-toggle-btn print:hidden">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-      </svg>
-    </button>
-  </div>
+{% if error %}
+<!-- Page d'erreur -->
+<div class="container mx-auto py-8 px-4 animate-fadeIn sm:px-6 lg:px-8">
+    <div class="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto border border-gray-100 text-center">
+        <div class="mb-6">
+            {% if error_type == 'not_found' %}
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-red-50 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            {% else %}
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-orange-50 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+            </div>
+            {% endif %}
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ error_title }}</h1>
+            <p class="text-gray-600 mb-6">{{ error_message }}</p>
+        </div>
+        
+        <div class="space-y-4">
+            <button onclick="history.back()" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour
+            </button>
+            
+            {% if error_type == 'not_found' %}
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <strong>Suggestions :</strong><br>
+                    • Vérifiez l'URL du colis<br>
+                    • Contactez l'administrateur si le problème persiste<br>
+                    • Le colis a peut-être été supprimé ou déplacé
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+            <div class="flex flex-col items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                </svg>
+                <p class="font-medium">IntraPro ERP</p>
+            </div>
+        </div>
+    </div>
 </div>
-
+{% else %}
+<!-- Contenu normal du colis -->
 <div class="container mx-auto py-8 px-4 animate-fadeIn sm:px-6 lg:px-8">
     <div class="bg-white rounded-xl shadow-lg p-6 max-w-3xl mx-auto border border-gray-100 transition-all duration-300 hover:shadow-xl hover-lift">
         <div class="text-center mb-8 animate-fadeIn" style="animation-delay: 0.1s;">
@@ -398,29 +1397,238 @@
                 </svg>
                 <h2 class="text-xl font-semibold text-gray-800">Articles</h2>
             </div>
-            <div class="overflow-hidden rounded-xl shadow-sm border border-gray-200">
+            <!-- Vue Desktop (tableau classique) -->
+            <div class="block md:block overflow-hidden rounded-xl shadow-sm border border-gray-200 desktop-view">
                 <div class="overflow-x-auto">
                     <table class="min-w-full bg-white">
                         <thead class="bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th class="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-3/4">Article</th>
-                                <th class="py-3 px-6 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Quantité</th>
+                                <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Article</th>
+                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Livré</th>
+                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Restant</th>
+                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             {% for item in colis.articles %}
                              <tr class="hover:bg-gray-50 transition-colors duration-200 animate-fadeIn" style="animation-delay: {{ 0.3 + (loop.index0 * 0.1) }}s;">
-                                 <td class="py-4 px-6 text-sm font-medium text-gray-800 w-3/4">{{ item.article_name or item.article }}</td>
-                                 <td class="py-4 px-6 text-sm text-right text-gray-800 w-1/4">
-                                     <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors duration-200">
-                                         {{ item.quantite }}
+                                 <td class="py-4 px-4 text-sm font-medium text-gray-800">
+                                     <div class="flex items-center">
+                                         <div class="w-2 h-2 rounded-full mr-3 
+                                             {% if item.statut_article == 'Livré' %}bg-green-500
+                                             {% elif item.statut_article == 'Partiellement livré' %}bg-yellow-500
+                                             {% elif item.statut_article == 'Non livré' %}bg-red-500
+                                             {% else %}bg-blue-500{% endif %}"></div>
+                                         {{ item.article_name or item.article }}
+                                     </div>
+                                 </td>
+                                 <td class="py-4 px-4 text-sm text-center">
+                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                         {% if item.statut_article == 'Livré' %}bg-green-100 text-green-800
+                                         {% elif item.statut_article == 'Partiellement livré' %}bg-yellow-100 text-yellow-800
+                                         {% elif item.statut_article == 'Non livré' %}bg-red-100 text-red-800
+                                         {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                         {{ item.statut_article or 'En attente' }}
                                      </span>
+                                 </td>
+                                 <td class="py-4 px-4 text-sm text-center font-medium text-gray-800">
+                                     {{ item.quantite_totale or item.quantite or 0 }}
+                                 </td>
+                                 <td class="py-4 px-4 text-sm text-center font-medium text-green-600">
+                                     {{ item.quantite_livree or 0 }}
+                                 </td>
+                                 <td class="py-4 px-4 text-sm text-center font-medium text-blue-600">
+                                     {{ item.quantite_restante or (item.quantite_totale or item.quantite or 0) - (item.quantite_livree or 0) }}
+                                 </td>
+                                 <td class="py-4 px-4 text-sm text-center">
+                                     {% set remaining = item.quantite_restante or (item.quantite_totale or item.quantite or 0) - (item.quantite_livree or 0) %}
+                                     {% set current_status = colis.status or 'Nouveau' %}
+                                     
+                                     {% if remaining > 0 and item.statut_article != 'Non livré' %}
+                                         {% if current_status in ['Enlevé', 'Partiellement Livré'] %}
+                                         <!-- Actions de livraison (si colis est Enlevé ou Partiellement Livré) -->
+                                         <div class="flex flex-col gap-1">
+                                             <!-- Livraison partielle -->
+                                             <div class="flex items-center gap-1">
+                                                 <input type="number" 
+                                                        id="qty_{{ item.name }}" 
+                                                        min="1" 
+                                                        max="{{ remaining }}" 
+                                                        value="1" 
+                                                        class="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                 <button onclick="deliverPartialQuantity('{{ item.name }}')" 
+                                                         class="btn-deliver-partial px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition duration-200">
+                                                     Livrer
+                                                 </button>
+                                             </div>
+                                             <!-- Livrer tout -->
+                                             <button onclick="deliverRemainingQuantity('{{ item.name }}')" 
+                                                     class="btn-deliver-all px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition duration-200">
+                                                 Livrer Tout
+                                             </button>
+                                             <!-- Marquer non livrable -->
+                                             <button onclick="markArticleUndeliverable('{{ item.name }}')" 
+                                                     class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition duration-200">
+                                                 Non Livrable
+                                             </button>
+                                         </div>
+                                         {% else %}
+                                         <!-- Statut du colis ne permet pas la livraison -->
+                                         <div class="text-center">
+                                             <span class="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                                                 {% if current_status == 'Nouveau' %}Colis non préparé
+                                                 {% elif current_status == 'Préparé' %}Colis non enlevé
+                                                 {% elif current_status == 'Livré' %}Déjà livré
+                                                 {% elif current_status == 'Annulé' %}Colis annulé
+                                                 {% elif current_status == 'Non Livré' %}Colis non livrable
+                                                 {% else %}En attente{% endif %}
+                                             </span>
+                                             {% if current_status in ['Nouveau', 'Préparé'] %}
+                                             <div class="mt-1">
+                                                 <span class="text-xs text-gray-500">Statut requis: Enlevé</span>
+                                             </div>
+                                             {% endif %}
+                                         </div>
+                                         {% endif %}
+                                     {% else %}
+                                     <span class="text-xs text-gray-500">
+                                         {% if item.statut_article == 'Non livré' %}❌ Non livrable
+                                         {% elif remaining <= 0 %}✅ Terminé
+                                         {% else %}⏸️ Aucune action{% endif %}
+                                     </span>
+                                     {% endif %}
                                  </td>
                              </tr>
                              {% endfor %}
                         </tbody>
                     </table>
                 </div>
+            </div>
+            
+            <!-- Vue Mobile (cartes) -->
+            <div class="mobile-view space-y-4">
+                {% for item in colis.articles %}
+                {% set remaining = item.quantite_restante or (item.quantite_totale or item.quantite or 0) - (item.quantite_livree or 0) %}
+                <div class="mobile-article-card bg-white rounded-lg border border-gray-200 shadow-sm p-4 animate-fadeIn" style="animation-delay: {{ 0.3 + (loop.index0 * 0.1) }}s;">
+                    <!-- En-tête de la carte -->
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center mb-2">
+                                <div class="w-3 h-3 rounded-full mr-2 flex-shrink-0
+                                    {% if item.statut_article == 'Livré' %}bg-green-500
+                                    {% elif item.statut_article == 'Partiellement livré' %}bg-yellow-500
+                                    {% elif item.statut_article == 'Non livré' %}bg-red-500
+                                    {% else %}bg-blue-500{% endif %}"></div>
+                                <h3 class="font-semibold text-gray-900 text-sm leading-tight truncate">{{ item.article_name or item.article }}</h3>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium flex-shrink-0
+                                {% if item.statut_article == 'Livré' %}bg-green-100 text-green-800
+                                {% elif item.statut_article == 'Partiellement livré' %}bg-yellow-100 text-yellow-800
+                                {% elif item.statut_article == 'Non livré' %}bg-red-100 text-red-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ item.statut_article or 'En attente' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations quantités -->
+                    <div class="quantity-grid grid grid-cols-3 gap-3 mb-4 bg-gray-50 rounded-lg p-3">
+                        <div class="quantity-item text-center">
+                            <div class="text-xs text-gray-500 font-medium mb-1">TOTAL</div>
+                            <div class="text-lg font-bold text-gray-900">{{ item.quantite_totale or item.quantite or 0 }}</div>
+                        </div>
+                        <div class="quantity-item text-center">
+                            <div class="text-xs text-gray-500 font-medium mb-1">LIVRÉ</div>
+                            <div class="text-lg font-bold text-green-600">{{ item.quantite_livree or 0 }}</div>
+                        </div>
+                        <div class="quantity-item text-center">
+                            <div class="text-xs text-gray-500 font-medium mb-1">RESTANT</div>
+                            <div class="text-lg font-bold text-blue-600">{{ remaining }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    {% set current_status = colis.status or 'Nouveau' %}
+                    {% if remaining > 0 and item.statut_article != 'Non livré' %}
+                        {% if current_status in ['Enlevé', 'Partiellement Livré'] %}
+                        <!-- Actions de livraison (si colis est Enlevé ou Partiellement Livré) -->
+                        <div class="space-y-3">
+                            <!-- Livraison partielle -->
+                            <div class="bg-blue-50 rounded-lg p-3">
+                                <div class="text-xs font-medium text-blue-800 mb-2">LIVRAISON PARTIELLE</div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" 
+                                           id="qty_mobile_{{ item.name }}" 
+                                           min="1" 
+                                           max="{{ remaining }}" 
+                                           value="1" 
+                                           class="mobile-qty-input flex-1 px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                                    <button onclick="deliverPartialQuantityMobile('{{ item.name }}')" 
+                                            class="btn-mobile-deliver-partial mobile-action-btn px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition duration-200 shadow-sm">
+                                        Livrer
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Actions rapides -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="deliverRemainingQuantity('{{ item.name }}')" 
+                                        class="btn-mobile-deliver-all mobile-action-btn flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition duration-200 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Livrer Tout
+                                </button>
+                                <button onclick="markArticleUndeliverable('{{ item.name }}')" 
+                                        class="mobile-action-btn flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition duration-200 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Non Livrable
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- Statut du colis ne permet pas la livraison -->
+                        <div class="text-center py-4 bg-amber-50 rounded-lg border border-amber-200">
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="text-2xl">
+                                    {% if current_status == 'Nouveau' %}📦
+                                    {% elif current_status == 'Préparé' %}🚛
+                                    {% elif current_status == 'Livré' %}✅
+                                    {% elif current_status == 'Annulé' %}❌
+                                    {% elif current_status == 'Non Livré' %}🚫
+                                    {% else %}⏳{% endif %}
+                                </div>
+                                <span class="text-sm text-amber-700 font-medium text-center">
+                                    {% if current_status == 'Nouveau' %}Colis non préparé
+                                    {% elif current_status == 'Préparé' %}Colis non enlevé
+                                    {% elif current_status == 'Livré' %}Déjà livré
+                                    {% elif current_status == 'Annulé' %}Colis annulé
+                                    {% elif current_status == 'Non Livré' %}Colis non livrable
+                                    {% else %}En attente{% endif %}
+                                </span>
+                                {% if current_status in ['Nouveau', 'Préparé'] %}
+                                <div class="mt-1">
+                                    <span class="text-xs text-amber-600">Statut requis: Enlevé</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="text-center py-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-500 font-medium">
+                            {% if item.statut_article == 'Non livré' %}❌ Non livrable
+                            {% elif remaining <= 0 %}✅ Terminé
+                            {% else %}⏸️ Aucune action{% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
         </div>
         {% else %}
@@ -432,16 +1640,82 @@
         </div>
         {% endif %}
         
-        {% if frappe.session.user != 'Guest' %}
-        <div class="mt-8 text-center animate-fadeIn" style="animation-delay: 0.4s;">
-            <a href="/app/colis/{{ colis.name }}" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 animate-pulse-slow">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                Ouvrir
-            </a>
+        <!-- Section des boutons d'action -->
+        <div class="mt-8 animate-fadeIn" style="animation-delay: 0.4s;">
+            <!-- Boutons de progression selon le statut actuel -->
+            <div class="space-y-4">
+                <div class="flex flex-wrap gap-3 justify-center">
+                    {% set current_status = colis.status or 'Nouveau' %}
+                    
+                    <!-- Bouton Nouveau -->
+                    <button id="btn-nouveau" onclick="setStatusNouveau()" class="inline-flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Nouveau
+                    </button>
+                    
+                    <!-- Bouton Préparé -->
+                    <button id="btn-prepare" onclick="setStatusPrepare()" class="inline-flex items-center justify-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Préparé
+                    </button>
+                    
+                    <!-- Bouton Enlevé -->
+                    <button id="btn-enleve" onclick="setStatusEnleve()" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        Enlevé
+                    </button>
+                    
+                    <!-- Bouton Livré -->
+                    <button id="btn-livre" onclick="setStatusLivre()" class="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Livré
+                    </button>
+                </div>
+                
+                <!-- Boutons spéciaux (conditionnels) -->
+                <div class="flex gap-3 justify-center pt-4 border-t border-gray-200">
+                    <button id="btn-deliver-all" onclick="deliverAllArticles()" class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Tout Livrer
+                    </button>
+                    
+                    <button id="btn-cancel" onclick="cancelPackage()" class="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Annuler
+                    </button>
+                    
+                    <button id="btn-not-delivered" onclick="markNotDelivered()" class="inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Non Livré
+                    </button>
+                </div>
+            </div>
+            
+            {% if frappe.session.user != 'Guest' %}
+            <div class="text-center">
+                <a href="/app/colis/{{ colis.name }}" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-5 rounded-lg transition duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Ouvrir dans l'application
+                </a>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
         
         <!-- Bouton retour en haut de page -->
 <div id="back-to-top" class="fixed bottom-4 right-4 z-50 opacity-0 invisible transition-all duration-300 print:hidden">
@@ -463,4 +1737,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

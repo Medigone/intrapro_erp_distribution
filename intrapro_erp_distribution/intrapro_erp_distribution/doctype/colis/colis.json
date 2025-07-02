@@ -8,13 +8,16 @@
   "html",
   "section_break_ldph",
   "status",
+  "column_break_hlss",
   "image",
   "section_break_cshx",
+  "date_creation",
+  "client",
+  "column_break_apah",
   "date",
   "section_break_kspn",
-  "client",
-  "column_break_tvzk",
   "bl",
+  "column_break_tvzk",
   "custom_numero_sequence",
   "section_break_anxd",
   "scan_barcode",
@@ -24,14 +27,20 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Statut",
-   "options": "Nouveau\nPr\u00e9par\u00e9\nEnlev\u00e9\nLivr\u00e9\nNon Livr\u00e9\nAnnul\u00e9"
+   "options": "Nouveau\nPr\u00e9par\u00e9\nEnlev\u00e9\nPartiellement Livr\u00e9\nLivr\u00e9\nNon Livr\u00e9\nAnnul\u00e9"
   },
   {
+   "description": "Format: X/Y o\u00f9 X est le num\u00e9ro du colis et Y le nombre total de colis",
    "fieldname": "custom_numero_sequence",
    "fieldtype": "Data",
-   "label": "Numéro de séquence",
-   "description": "Format: X/Y où X est le numéro du colis et Y le nombre total de colis"
+   "in_list_view": 1,
+   "label": "Num\u00e9ro de s\u00e9quence",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_cshx",
@@ -41,7 +50,8 @@
    "default": "Now",
    "fieldname": "date",
    "fieldtype": "Datetime",
-   "label": "Date"
+   "label": "Date/Heure",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_kspn",
@@ -50,8 +60,11 @@
   {
    "fieldname": "client",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Client",
-   "options": "Customer"
+   "options": "Customer",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_tvzk",
@@ -60,8 +73,10 @@
   {
    "fieldname": "bl",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Bon de livraison",
-   "options": "Delivery Note"
+   "options": "Delivery Note",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_anxd",
@@ -91,13 +106,31 @@
   {
    "fieldname": "image",
    "fieldtype": "Attach Image",
+   "hidden": 1,
    "label": "Image QR"
+  },
+  {
+   "fieldname": "column_break_hlss",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_apah",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date_creation",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "read_only": 1
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-01 15:44:38.278399",
+ "modified": "2025-07-02 00:55:27.440064",
  "modified_by": "Administrator",
  "module": "IntraPro ERP Distribution",
  "name": "Colis",
@@ -130,6 +163,10 @@
   {
    "color": "Orange",
    "title": "Enlev\u00e9"
+  },
+  {
+   "color": "Yellow",
+   "title": "Partiellement Livr\u00e9"
   },
   {
    "color": "Green",

@@ -12,6 +12,32 @@ class Colis(Document):
 	def validate(self):
 		# Générer le QR code à chaque sauvegarde
 		self.generate_qr_code()
+		# Calculer le statut global basé sur les articles
+		self.calculate_global_status()
+	
+	def calculate_global_status(self):
+		"""Calcule automatiquement le statut global du colis basé sur les statuts des articles"""
+		if not self.articles:
+			return
+		
+		# Compter les statuts des articles
+		article_statuses = [article.statut_article for article in self.articles if article.statut_article]
+		
+		if not article_statuses:
+			return
+		
+		# Logique de calcul du statut global
+		if all(status == "Livré" for status in article_statuses):
+			self.status = "Livré"
+		elif all(status == "En attente" for status in article_statuses):
+			# Garder le statut actuel si tous les articles sont en attente
+			pass
+		elif any(status == "Partiellement livré" for status in article_statuses) or \
+			 (any(status == "Livré" for status in article_statuses) and 
+			  any(status in ["En attente", "Partiellement livré"] for status in article_statuses)):
+			self.status = "Partiellement Livré"
+		elif all(status == "Non livré" for status in article_statuses):
+			self.status = "Non Livré"
 	
 	@frappe.whitelist()
 	def generate_qr_code(self):
@@ -135,6 +161,321 @@ def get_item_from_barcode(barcode):
 			frappe.flags.ignore_permissions = False
 
 
+def get_allowed_transitions():
+	"""Retourne les transitions de statut autorisées
+	
+	Returns:
+		dict: Dictionnaire des transitions autorisées
+	"""
+	return {
+		'Nouveau': ['Préparé', 'Annulé'],
+		'Préparé': ['Nouveau', 'Enlevé', 'Annulé'],
+		'Enlevé': ['Préparé', 'Livré', 'Non Livré'],
+		'Livré': [],  # État final
+		'Annulé': ['Nouveau'],  # Peut être réactivé
+		'Non Livré': ['Enlevé', 'Annulé']  # Peut être relancé ou annulé
+	}
+
+
+def validate_status_transition(current_status, new_status):
+	"""Valide les transitions de statut autorisées
+	
+	Args:
+		current_status (str): Statut actuel
+		new_status (str): Nouveau statut souhaité
+	
+	Returns:
+		tuple: (is_valid, error_message)
+	"""
+	allowed_transitions = get_allowed_transitions()
+	
+	if current_status not in allowed_transitions:
+		return False, f"Statut actuel '{current_status}' non reconnu"
+	
+	if new_status not in allowed_transitions[current_status]:
+		return False, f"Transition de '{current_status}' vers '{new_status}' non autorisée"
+	
+	return True, None
+
+
+@frappe.whitelist()
+def get_available_actions(docname):
+	"""Retourne les actions disponibles pour un colis selon son statut
+	
+	Args:
+		docname (str): Le nom du document Colis
+	
+	Returns:
+		dict: Actions disponibles et informations sur le statut
+	"""
+	doc = frappe.get_doc("Colis", docname)
+	current_status = doc.status
+	allowed_transitions = get_allowed_transitions()
+	
+	# Actions de statut disponibles
+	status_actions = {
+		'can_set_nouveau': 'Nouveau' in allowed_transitions.get(current_status, []),
+		'can_set_prepare': 'Préparé' in allowed_transitions.get(current_status, []),
+		'can_set_enleve': 'Enlevé' in allowed_transitions.get(current_status, []),
+		'can_set_livre': 'Livré' in allowed_transitions.get(current_status, []),
+		'can_cancel': 'Annulé' in allowed_transitions.get(current_status, []),
+		'can_mark_not_delivered': 'Non Livré' in allowed_transitions.get(current_status, [])
+	}
+	
+	# Actions sur les articles (si le colis est enlevé ou partiellement livré)
+	article_actions = {
+		'can_deliver_articles': current_status in ['Enlevé', 'Partiellement Livré'],
+		'delivery_message': 'Le colis doit être "Enlevé" ou "Partiellement Livré" pour pouvoir livrer des articles' if current_status not in ['Enlevé', 'Partiellement Livré'] else None
+	}
+	
+	return {
+		'current_status': current_status,
+		'status_actions': status_actions,
+		'article_actions': article_actions,
+		'allowed_next_statuses': allowed_transitions.get(current_status, [])
+	}
+
+
+@frappe.whitelist()
+def set_status_nouveau(docname, confirm=False):
+	"""Met le colis au statut Nouveau
+	
+	Args:
+		docname (str): Le nom du document Colis
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	doc = frappe.get_doc("Colis", docname)
+	previous_status = doc.status
+	
+	# Validation de la transition
+	is_valid, error_msg = validate_status_transition(previous_status, 'Nouveau')
+	if not is_valid:
+		return {
+			'success': False,
+			'message': error_msg
+		}
+	
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': f'Êtes-vous sûr de vouloir remettre ce colis au statut "Nouveau" ? (Statut actuel: "{previous_status}")'
+		}
+	
+	doc.status = 'Nouveau'
+	doc.save()
+	
+	return {
+		'success': True,
+		'message': f'Statut mis à jour vers "Nouveau" (ancien statut: "{previous_status}")',
+		'previous_status': previous_status,
+		'new_status': 'Nouveau'
+	}
+
+
+@frappe.whitelist()
+def set_status_prepare(docname, confirm=False):
+	"""Met le colis au statut Préparé
+	
+	Args:
+		docname (str): Le nom du document Colis
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	doc = frappe.get_doc("Colis", docname)
+	previous_status = doc.status
+	
+	# Validation de la transition
+	is_valid, error_msg = validate_status_transition(previous_status, 'Préparé')
+	if not is_valid:
+		return {
+			'success': False,
+			'message': error_msg
+		}
+	
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Préparé" ? (Statut actuel: "{previous_status}")'
+		}
+	
+	doc.status = 'Préparé'
+	doc.save()
+	
+	return {
+		'success': True,
+		'message': f'Statut mis à jour vers "Préparé" (ancien statut: "{previous_status}")',
+		'previous_status': previous_status,
+		'new_status': 'Préparé'
+	}
+
+
+@frappe.whitelist()
+def set_status_enleve(docname, confirm=False):
+	"""Met le colis au statut Enlevé
+	
+	Args:
+		docname (str): Le nom du document Colis
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	doc = frappe.get_doc("Colis", docname)
+	previous_status = doc.status
+	
+	# Validation de la transition
+	is_valid, error_msg = validate_status_transition(previous_status, 'Enlevé')
+	if not is_valid:
+		return {
+			'success': False,
+			'message': error_msg
+		}
+	
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Enlevé" ? (Statut actuel: "{previous_status}")'
+		}
+	
+	doc.status = 'Enlevé'
+	doc.save()
+	
+	return {
+		'success': True,
+		'message': f'Statut mis à jour vers "Enlevé" (ancien statut: "{previous_status}")',
+		'previous_status': previous_status,
+		'new_status': 'Enlevé'
+	}
+
+
+@frappe.whitelist()
+def set_status_livre(docname, confirm=False):
+	"""Met le colis au statut Livré
+	
+	Args:
+		docname (str): Le nom du document Colis
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	doc = frappe.get_doc("Colis", docname)
+	previous_status = doc.status
+	
+	# Validation de la transition
+	is_valid, error_msg = validate_status_transition(previous_status, 'Livré')
+	if not is_valid:
+		return {
+			'success': False,
+			'message': error_msg
+		}
+	
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Livré" ? (Statut actuel: "{previous_status}")'
+		}
+	
+	doc.status = 'Livré'
+	doc.save()
+	
+	return {
+		'success': True,
+		'message': f'Statut mis à jour vers "Livré" (ancien statut: "{previous_status}")',
+		'previous_status': previous_status,
+		'new_status': 'Livré'
+	}
+
+
+@frappe.whitelist()
+def set_status_cancelled(docname, confirm=False):
+	"""Met le colis au statut Annulé
+	
+	Args:
+		docname (str): Le nom du document Colis
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	doc = frappe.get_doc("Colis", docname)
+	previous_status = doc.status
+	
+	# Validation de la transition
+	is_valid, error_msg = validate_status_transition(previous_status, 'Annulé')
+	if not is_valid:
+		return {
+			'success': False,
+			'message': error_msg
+		}
+	
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': f'Êtes-vous sûr de vouloir annuler ce colis ? (Statut actuel: "{previous_status}")'
+		}
+	
+	doc.status = 'Annulé'
+	doc.save()
+	
+	return {
+		'success': True,
+		'message': f'Colis annulé (ancien statut: "{previous_status}")',
+		'previous_status': previous_status,
+		'new_status': 'Annulé'
+	}
+
+
+@frappe.whitelist()
+def set_status_not_delivered(docname, confirm=False):
+	"""Met le colis au statut Non Livré
+	
+	Args:
+		docname (str): Le nom du document Colis
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	doc = frappe.get_doc("Colis", docname)
+	previous_status = doc.status
+	
+	# Validation de la transition
+	is_valid, error_msg = validate_status_transition(previous_status, 'Non Livré')
+	if not is_valid:
+		return {
+			'success': False,
+			'message': error_msg
+		}
+	
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': f'Êtes-vous sûr de marquer ce colis comme non livré ? (Statut actuel: "{previous_status}")'
+		}
+	
+	doc.status = 'Non Livré'
+	doc.save()
+	
+	return {
+		'success': True,
+		'message': f'Colis marqué comme non livré (ancien statut: "{previous_status}")',
+		'previous_status': previous_status,
+		'new_status': 'Non Livré'
+	}
+
+
 @frappe.whitelist()
 def download_qr_code(docname):
 	"""Télécharge le QR code existant d'un colis ou en génère un nouveau si nécessaire
@@ -191,3 +532,285 @@ def download_qr_code(docname):
 	frappe.response['filecontent'] = buffer.getvalue()
 	frappe.response['filename'] = f"qr_code_{doc.name}.png"
 	frappe.response['type'] = 'download'
+
+
+@frappe.whitelist()
+def deliver_article_quantity(docname, article_name, quantity, confirm=False):
+	"""Livre une quantité spécifique d'un article
+	
+	Args:
+		docname (str): Le nom du document Colis
+		article_name (str): Le nom de l'article dans la table
+		quantity (int): La quantité à livrer
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': f'Êtes-vous sûr de vouloir livrer {quantity} unités de cet article ?'
+		}
+	
+	try:
+		quantity = int(quantity)
+		if quantity <= 0:
+			return {
+				'success': False,
+				'message': 'La quantité doit être positive'
+			}
+		
+		# Récupérer le document colis
+		colis_doc = frappe.get_doc("Colis", docname)
+		
+		# Trouver l'article dans la table
+		article_doc = None
+		for article in colis_doc.articles:
+			if article.name == article_name:
+				article_doc = frappe.get_doc("Articles Colis", article.name)
+				break
+		
+		if not article_doc:
+			return {
+				'success': False,
+				'message': 'Article non trouvé'
+			}
+		
+		# Utiliser la méthode de livraison de l'article
+		result = article_doc.deliver_quantity(quantity)
+		
+		# Recharger le document colis pour récupérer les modifications
+		colis_doc.reload()
+		
+		# Recalculer le statut global du colis
+		colis_doc.calculate_global_status()
+		colis_doc.save()
+		
+		# Forcer la validation et sauvegarde du document parent
+		frappe.db.commit()
+		
+		# Ajouter les données complètes de l'article pour la mise à jour de l'interface
+		if result.get('success'):
+			result['article_data'] = {
+				'quantite_totale': article_doc.quantite_totale,
+				'quantite_livree': article_doc.quantite_livree,
+				'quantite_restante': article_doc.quantite_restante,
+				'statut_article': article_doc.statut_article
+			}
+		
+		return result
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur lors de la livraison partielle: {e}")
+		return {
+			'success': False,
+			'message': f'Erreur: {str(e)}'
+		}
+
+
+@frappe.whitelist()
+def deliver_article_remaining(docname, article_name, confirm=False):
+	"""Livre toute la quantité restante d'un article
+	
+	Args:
+		docname (str): Le nom du document Colis
+		article_name (str): Le nom de l'article dans la table
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': 'Êtes-vous sûr de vouloir livrer toute la quantité restante de cet article ?'
+		}
+	
+	try:
+		# Récupérer le document colis
+		colis_doc = frappe.get_doc("Colis", docname)
+		
+		# Trouver l'article dans la table
+		article_doc = None
+		for article in colis_doc.articles:
+			if article.name == article_name:
+				article_doc = frappe.get_doc("Articles Colis", article.name)
+				break
+		
+		if not article_doc:
+			return {
+				'success': False,
+				'message': 'Article non trouvé'
+			}
+		
+		# Utiliser la méthode de livraison complète de l'article
+		result = article_doc.deliver_remaining()
+		
+		# Recharger le document colis pour récupérer les modifications
+		colis_doc.reload()
+		
+		# Recalculer le statut global du colis
+		colis_doc.calculate_global_status()
+		colis_doc.save()
+		
+		# Forcer la validation et sauvegarde du document parent
+		frappe.db.commit()
+		
+		# Ajouter les données complètes de l'article pour la mise à jour de l'interface
+		if result.get('success'):
+			result['article_data'] = {
+				'quantite_totale': article_doc.quantite_totale,
+				'quantite_livree': article_doc.quantite_livree,
+				'quantite_restante': article_doc.quantite_restante,
+				'statut_article': article_doc.statut_article
+			}
+		
+		return result
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur lors de la livraison complète: {e}")
+		return {
+			'success': False,
+			'message': f'Erreur: {str(e)}'
+		}
+
+
+@frappe.whitelist()
+def mark_article_undeliverable(docname, article_name, reason="", confirm=False):
+	"""Marque un article comme non livrable
+	
+	Args:
+		docname (str): Le nom du document Colis
+		article_name (str): Le nom de l'article dans la table
+		reason (str): Raison pour laquelle l'article n'est pas livrable
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': 'Êtes-vous sûr de vouloir marquer cet article comme non livrable ?'
+		}
+	
+	try:
+		# Récupérer le document colis
+		colis_doc = frappe.get_doc("Colis", docname)
+		
+		# Trouver l'article dans la table
+		article_doc = None
+		for article in colis_doc.articles:
+			if article.name == article_name:
+				article_doc = frappe.get_doc("Articles Colis", article.name)
+				break
+		
+		if not article_doc:
+			return {
+				'success': False,
+				'message': 'Article non trouvé'
+			}
+		
+		# Marquer l'article comme non livrable
+		result = article_doc.mark_as_undeliverable(reason)
+		
+		# Recharger le document colis pour récupérer les modifications
+		colis_doc.reload()
+		
+		# Recalculer le statut global du colis
+		colis_doc.calculate_global_status()
+		colis_doc.save()
+		
+		# Forcer la validation et sauvegarde du document parent
+		frappe.db.commit()
+		
+		# Ajouter les données complètes de l'article pour la mise à jour de l'interface
+		if result.get('success'):
+			result['article_data'] = {
+				'quantite_totale': article_doc.quantite_totale,
+				'quantite_livree': article_doc.quantite_livree,
+				'quantite_restante': article_doc.quantite_restante,
+				'statut_article': article_doc.statut_article
+			}
+		
+		return result
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur lors du marquage non livrable: {e}")
+		return {
+			'success': False,
+			'message': f'Erreur: {str(e)}'
+		}
+
+
+@frappe.whitelist()
+def deliver_all_articles(docname, confirm=False):
+	"""Livre tous les articles restants d'un colis
+	
+	Args:
+		docname (str): Le nom du document Colis
+		confirm (bool): Confirmation de l'utilisateur
+	
+	Returns:
+		dict: Résultat de l'opération
+	"""
+	if not confirm:
+		return {
+			'success': False,
+			'require_confirmation': True,
+			'message': 'Êtes-vous sûr de vouloir livrer tous les articles restants ?'
+		}
+	
+	try:
+		# Récupérer le document colis
+		colis_doc = frappe.get_doc("Colis", docname)
+		
+		# Compter les articles livrables
+		articles_livres = 0
+		articles_total = 0
+		
+		# Livrer tous les articles qui peuvent l'être
+		for article in colis_doc.articles:
+			article_doc = frappe.get_doc("Articles Colis", article.name)
+			articles_total += 1
+			
+			# Vérifier si l'article peut être livré (quantité restante > 0 et statut approprié)
+			if (article_doc.quantite_restante > 0 and 
+				article_doc.statut_article in ['En Attente', 'Partiellement Livré']):
+				
+				# Livrer la quantité restante
+				result = article_doc.deliver_remaining()
+				if result.get('success'):
+					articles_livres += 1
+		
+		# Recharger le document colis pour récupérer les modifications
+		colis_doc.reload()
+		
+		# Recalculer le statut global du colis
+		colis_doc.calculate_global_status()
+		colis_doc.save()
+		
+		# Forcer la validation et sauvegarde du document parent
+		frappe.db.commit()
+		
+		if articles_livres > 0:
+			return {
+				'success': True,
+				'message': f'{articles_livres} article(s) livré(s) avec succès'
+			}
+		else:
+			return {
+				'success': False,
+				'message': 'Aucun article à livrer'
+			}
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur lors de la livraison de tous les articles: {e}")
+		return {
+			'success': False,
+			'message': f'Erreur: {str(e)}'
+		}

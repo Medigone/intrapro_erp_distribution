@@ -10,8 +10,16 @@ def get_context(context):
         frappe.throw(_('ID du colis non spécifié'), frappe.ValidationError)
     
     try:
-        # Récupérer le document Colis
+        # Forcer la récupération des données fraîches depuis la base
+        frappe.clear_cache()
+        frappe.clear_document_cache('Colis', colis_id)
+        
+        # Récupérer le document Colis avec les données fraîches
         colis = frappe.get_doc('Colis', colis_id)
+        
+        # Recharger explicitement tous les articles pour avoir les données à jour
+        for item in colis.articles:
+            item.reload()
         
         # Ajouter les informations du client si disponible
         if colis.client:
@@ -31,8 +39,21 @@ def get_context(context):
         context.title = _("Informations Colis {0}").format(colis.name)
         
     except frappe.DoesNotExistError:
-        frappe.throw(_('Colis non trouvé'), frappe.DoesNotExistError)
+        # Au lieu de lever une exception, afficher une page d'erreur conviviale
+        context.error = True
+        context.error_title = _('Colis non trouvé')
+        context.error_message = _('Le colis avec l\'ID "{0}" n\'existe pas ou a été supprimé.').format(colis_id)
+        context.error_type = 'not_found'
+        context.title = _('Erreur - Colis non trouvé')
+        return context
+        
     except Exception as e:
-        frappe.throw(_('Erreur lors de la récupération des informations du colis: {0}').format(str(e)))
+        # Gestion d'autres erreurs
+        context.error = True
+        context.error_title = _('Erreur système')
+        context.error_message = _('Une erreur s\'est produite lors de la récupération des informations du colis: {0}').format(str(e))
+        context.error_type = 'system_error'
+        context.title = _('Erreur système')
+        return context
     
     return context

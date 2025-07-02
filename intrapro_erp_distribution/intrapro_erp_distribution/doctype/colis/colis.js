@@ -3,46 +3,6 @@
 
 frappe.ui.form.on("Colis", {
 	refresh(frm) {
-		// Ajouter un bouton pour scanner le code-barres des articles
-		frm.add_custom_button(__('Scanner Code-barres Article'), function() {
-			// Initialiser le scanner
-			const scanner = new frappe.ui.Scanner({
-				dialog: true, // Ouvrir le scanner dans une boîte de dialogue
-				multiple: true, // Permettre de scanner plusieurs articles
-				on_scan(data) {
-					// Traiter le code-barres scanné
-					traiter_article_scanne(frm, data.decodedText);
-				}
-			});
-		}, __('Actions'));
-		
-		// Ajouter un bouton pour régénérer le QR code
-		frm.add_custom_button(__('Régénérer QR Code'), function() {
-			frm.call({
-				doc: frm.doc,
-				method: 'generate_qr_code',
-				callback: function(r) {
-					frm.reload_doc();
-					frappe.show_alert({
-						message: __('QR Code régénéré avec succès'),
-						indicator: 'green'
-					}, 3);
-				}
-			});
-		}, __('Actions'));
-		
-		// Ajouter un bouton pour télécharger le QR code
-		if (frm.doc.name && frm.doc.name !== 'new-colis') {
-			frm.add_custom_button(__('Télécharger QR Code'), function() {
-				window.open(
-					frappe.urllib.get_full_url(
-						`/api/method/intrapro_erp_distribution.intrapro_erp_distribution.doctype.colis.colis.download_qr_code?docname=${frm.doc.name}`
-					),
-					'_blank'
-				);
-			}, __('Actions'));
-		}
-		
 		// Afficher le QR code dans le champ HTML s'il existe
 		if (frm.doc.image) {
 			frm.set_df_property('html', 'options', `
