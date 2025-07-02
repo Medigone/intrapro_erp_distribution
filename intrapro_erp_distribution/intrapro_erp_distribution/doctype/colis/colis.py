@@ -262,7 +262,7 @@ def set_status_nouveau(docname, confirm=False):
 		return {
 			'success': False,
 			'require_confirmation': True,
-			'message': f'Êtes-vous sûr de vouloir remettre ce colis au statut "Nouveau" ? (Statut actuel: "{previous_status}")'
+			'message': f'Êtes-vous sûr de vouloir remettre ce colis au statut "Nouveau" ?'
 		}
 	
 	doc.status = 'Nouveau'
@@ -302,7 +302,7 @@ def set_status_prepare(docname, confirm=False):
 		return {
 			'success': False,
 			'require_confirmation': True,
-			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Préparé" ? (Statut actuel: "{previous_status}")'
+			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Préparé" ?'
 		}
 	
 	doc.status = 'Préparé'
@@ -342,7 +342,7 @@ def set_status_enleve(docname, confirm=False):
 		return {
 			'success': False,
 			'require_confirmation': True,
-			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Enlevé" ? (Statut actuel: "{previous_status}")'
+			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Enlevé" ?'
 		}
 	
 	doc.status = 'Enlevé'
@@ -382,7 +382,7 @@ def set_status_livre(docname, confirm=False):
 		return {
 			'success': False,
 			'require_confirmation': True,
-			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Livré" ? (Statut actuel: "{previous_status}")'
+			'message': f'Êtes-vous sûr de vouloir marquer ce colis comme "Livré" ?'
 		}
 	
 	doc.status = 'Livré'
@@ -422,7 +422,7 @@ def set_status_cancelled(docname, confirm=False):
 		return {
 			'success': False,
 			'require_confirmation': True,
-			'message': f'Êtes-vous sûr de vouloir annuler ce colis ? (Statut actuel: "{previous_status}")'
+			'message': f'Êtes-vous sûr de vouloir annuler ce colis ?'
 		}
 	
 	doc.status = 'Annulé'

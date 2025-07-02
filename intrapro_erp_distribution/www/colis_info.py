@@ -1,6 +1,62 @@
 import frappe
 from frappe import _
 
+@frappe.whitelist()
+def get_fresh_colis_data(colis_id):
+    """Récupère les données fraîches du colis pour mise à jour AJAX"""
+    try:
+        # Forcer la récupération des données fraîches depuis la base
+        frappe.clear_cache()
+        frappe.clear_document_cache('Colis', colis_id)
+        
+        # Récupérer le document Colis avec les données fraîches
+        colis = frappe.get_doc('Colis', colis_id)
+        
+        # Recharger explicitement tous les articles pour avoir les données à jour
+        for item in colis.articles:
+            item.reload()
+        
+        # Préparer les données des articles
+        articles_data = []
+        for item in colis.articles:
+            article_data = {
+                'name': item.name,
+                'article': item.article,
+                'article_name': item.article_name if hasattr(item, 'article_name') else '',
+                'quantite_totale': item.quantite_totale or 0,
+                'quantite_livree': item.quantite_livree or 0,
+                'quantite_restante': item.quantite_restante or 0,
+                'statut_article': item.statut_article or 'En attente'
+            }
+            
+            # Récupérer le nom de l'article si pas déjà présent
+            if item.article and not article_data['article_name']:
+                try:
+                    item_doc = frappe.get_doc('Item', item.article)
+                    article_data['article_name'] = item_doc.item_name
+                except:
+                    article_data['article_name'] = item.article
+            
+            articles_data.append(article_data)
+        
+        return {
+            'success': True,
+            'colis': {
+                'name': colis.name,
+                'status': colis.status,
+                'client': colis.client,
+                'date': str(colis.date) if colis.date else '',
+                'articles': articles_data
+            }
+        }
+        
+    except Exception as e:
+        frappe.log_error(f"Erreur lors de la récupération des données fraîches du colis: {e}")
+        return {
+            'success': False,
+            'message': f'Erreur: {str(e)}'
+        }
+
 def get_context(context):
     """Récupère les informations du colis pour l'affichage public"""
     # Récupérer l'ID du colis depuis les paramètres de l'URL

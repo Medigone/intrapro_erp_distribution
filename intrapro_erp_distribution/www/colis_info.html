@@ -166,6 +166,8 @@
   /* Animations spécifiques pour les mises à jour */
   .update-highlight {
     animation: updatePulse 2s ease-in-out;
+    background-color: #f0f9ff !important;
+    transition: background-color 2s ease-out;
   }
   
   @keyframes updatePulse {
@@ -352,6 +354,34 @@
     allowed_next_statuses: []
   };
   
+  // Fonction pour récupérer les données fraîches du colis depuis le backend
+  function fetchFreshColisData() {
+    const colisId = '{{ colis.name }}';
+    
+    return fetch('/api/method/intrapro_erp_distribution.www.colis_info.get_fresh_colis_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Frappe-CSRF-Token': frappe.csrf_token || ''
+      },
+      body: JSON.stringify({
+        colis_id: colisId
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message && data.message.success) {
+        return data.message.colis;
+      } else {
+        throw new Error(data.message?.message || 'Erreur lors de la récupération des données');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur lors de la récupération des données fraîches:', error);
+      throw error;
+    });
+  }
+  
   // Fonction pour récupérer les actions disponibles depuis le backend
   function fetchAvailableActions() {
     const colisId = '{{ colis.name }}';
@@ -375,6 +405,161 @@
     })
     .catch(error => {
       console.error('Erreur lors de la récupération des actions disponibles:', error);
+    });
+  }
+  
+  // Fonction pour mettre à jour les données des articles dans l'interface
+  function updateArticlesData(freshColisData) {
+    // Mettre à jour le statut du colis dans l'interface
+    updateColisStatus(freshColisData.status);
+    
+    // Mettre à jour les données des articles dans le tableau desktop
+    updateDesktopArticlesTable(freshColisData.articles);
+    
+    // Mettre à jour les données des articles dans la vue mobile
+    updateMobileArticlesCards(freshColisData.articles);
+  }
+  
+  // Fonction pour mettre à jour le statut du colis dans l'interface
+  function updateColisStatus(newStatus) {
+    // Mettre à jour tous les éléments qui affichent le statut
+    const statusElements = document.querySelectorAll('.status-badge, [class*="bg-yellow-100"], [class*="bg-blue-100"], [class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-gray-100"]');
+    
+    statusElements.forEach(element => {
+      // Supprimer les anciennes classes de couleur
+      element.classList.remove('bg-yellow-100', 'text-yellow-800', 'border-yellow-200');
+      element.classList.remove('bg-blue-100', 'text-blue-800', 'border-blue-200');
+      element.classList.remove('bg-green-100', 'text-green-800', 'border-green-200');
+      element.classList.remove('bg-red-100', 'text-red-800', 'border-red-200');
+      element.classList.remove('bg-gray-100', 'text-gray-800', 'border-gray-200');
+      
+      // Ajouter les nouvelles classes selon le statut
+      if (newStatus === 'Livré') {
+        element.classList.add('bg-green-100', 'text-green-800', 'border-green-200');
+      } else if (newStatus === 'Partiellement Livré') {
+        element.classList.add('bg-yellow-100', 'text-yellow-800', 'border-yellow-200');
+      } else if (newStatus === 'Enlevé') {
+        element.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-200');
+      } else if (newStatus === 'Annulé' || newStatus === 'Non Livré') {
+        element.classList.add('bg-red-100', 'text-red-800', 'border-red-200');
+      } else {
+        element.classList.add('bg-gray-100', 'text-gray-800', 'border-gray-200');
+      }
+      
+      // Mettre à jour le texte
+      element.textContent = newStatus;
+    });
+    
+    // Mettre à jour la variable globale
+    availableActions.current_status = newStatus;
+  }
+  
+  // Fonction pour mettre à jour le tableau des articles (vue desktop)
+  function updateDesktopArticlesTable(articlesData) {
+    const tableBody = document.querySelector('tbody');
+    if (!tableBody) return;
+    
+    const rows = tableBody.querySelectorAll('tr');
+    
+    articlesData.forEach((articleData, index) => {
+      const row = rows[index];
+      if (!row) return;
+      
+      // Mettre à jour le statut (point coloré)
+      const statusDot = row.querySelector('.w-2.h-2');
+      if (statusDot) {
+        statusDot.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-gray-400', 'bg-red-500');
+        if (articleData.statut_article === 'Livré') {
+          statusDot.classList.add('bg-green-500');
+        } else if (articleData.statut_article === 'Partiellement livré') {
+          statusDot.classList.add('bg-yellow-500');
+        } else if (articleData.statut_article === 'Non livré') {
+          statusDot.classList.add('bg-red-500');
+        } else {
+          statusDot.classList.add('bg-gray-400');
+        }
+      }
+      
+      // Mettre à jour les quantités
+      const cells = row.querySelectorAll('td');
+      if (cells.length >= 4) {
+        // Quantité totale (colonne 2)
+        cells[1].textContent = articleData.quantite_totale;
+        // Quantité livrée (colonne 3)
+        cells[2].textContent = articleData.quantite_livree;
+        // Quantité restante (colonne 4)
+        cells[3].textContent = articleData.quantite_restante;
+      }
+      
+      // Ajouter une animation de mise à jour
+      row.classList.add('update-highlight');
+      setTimeout(() => {
+        row.classList.remove('update-highlight');
+      }, 2000);
+    });
+  }
+  
+  // Fonction pour mettre à jour les cartes d'articles (vue mobile)
+  function updateMobileArticlesCards(articlesData) {
+    const mobileCards = document.querySelectorAll('.mobile-article-card');
+    
+    articlesData.forEach((articleData, index) => {
+      const card = mobileCards[index];
+      if (!card) return;
+      
+      // Mettre à jour le statut (point coloré)
+      const statusDot = card.querySelector('.w-3.h-3');
+      if (statusDot) {
+        statusDot.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-gray-400', 'bg-red-500');
+        if (articleData.statut_article === 'Livré') {
+          statusDot.classList.add('bg-green-500');
+        } else if (articleData.statut_article === 'Partiellement livré') {
+          statusDot.classList.add('bg-yellow-500');
+        } else if (articleData.statut_article === 'Non livré') {
+          statusDot.classList.add('bg-red-500');
+        } else {
+          statusDot.classList.add('bg-gray-400');
+        }
+      }
+      
+      // Mettre à jour les quantités dans la grille
+      const quantityItems = card.querySelectorAll('.quantity-item .text-lg.font-bold');
+      if (quantityItems.length >= 3) {
+        quantityItems[0].textContent = articleData.quantite_totale; // Total
+        quantityItems[1].textContent = articleData.quantite_livree; // Livré
+        quantityItems[2].textContent = articleData.quantite_restante; // Restant
+      }
+      
+      // Ajouter une animation de mise à jour
+      card.classList.add('update-highlight');
+      setTimeout(() => {
+        card.classList.remove('update-highlight');
+      }, 2000);
+    });
+  }
+  
+  // Fonction complète pour rafraîchir toutes les données après un changement de statut
+  function refreshAllData() {
+    return Promise.all([
+      fetchFreshColisData(),
+      new Promise(resolve => {
+        fetchAvailableActions();
+        // Attendre un peu pour que fetchAvailableActions se termine
+        setTimeout(resolve, 500);
+      })
+    ])
+    .then(([freshColisData]) => {
+      // Mettre à jour les données des articles
+      updateArticlesData(freshColisData);
+      
+      // Mettre à jour l'interface basée sur les actions disponibles
+      updateUIBasedOnAvailableActions();
+      
+      return freshColisData;
+    })
+    .catch(error => {
+      console.error('Erreur lors du rafraîchissement des données:', error);
+      throw error;
     });
   }
   
@@ -610,7 +795,7 @@
                 showNotification(data.message.message, 'success');
                 // Mettre à jour les actions disponibles au lieu de recharger la page
                 setTimeout(() => {
-                  fetchAvailableActions();
+                  refreshAllData();
                 }, 500);
               } else {
                 showNotification(data.message?.message || 'Erreur lors de la mise à jour', 'error');
@@ -687,7 +872,7 @@
                 showNotification(data.message.message, 'success');
                 // Mettre à jour les actions disponibles au lieu de recharger la page
                 setTimeout(() => {
-                  fetchAvailableActions();
+                  refreshAllData();
                 }, 500);
               } else {
                 showNotification(data.message?.message || 'Erreur lors de l\'annulation', 'error');
@@ -844,8 +1029,8 @@
         showNotification(data.message.message, 'success');
         // Mettre à jour dynamiquement la table au lieu de recharger la page
         updateArticleRow(articleName, data.message.article_data);
-        // Mettre à jour les actions disponibles
-        fetchAvailableActions();
+        // Mettre à jour toutes les données
+        refreshAllData();
       } else {
         const errorMsg = data.message ? data.message.message : 'Erreur lors de la livraison partielle';
         showNotification(errorMsg, 'error');
@@ -1088,8 +1273,8 @@
         showNotification(data.message.message, 'success');
         // Mettre à jour dynamiquement la table au lieu de recharger la page
         updateArticleRow(articleName, data.message.article_data);
-        // Mettre à jour les actions disponibles
-        fetchAvailableActions();
+        // Mettre à jour toutes les données
+        refreshAllData();
       } else {
         const errorMsg = data.message ? data.message.message : 'Erreur lors de la livraison complète';
         showNotification(errorMsg, 'error');
@@ -1127,8 +1312,8 @@
         showNotification(data.message.message, 'success');
         // Mettre à jour dynamiquement la table au lieu de recharger la page
         updateArticleRow(articleName, data.message.article_data);
-        // Mettre à jour les actions disponibles
-        fetchAvailableActions();
+        // Mettre à jour toutes les données
+        refreshAllData();
       } else {
         const errorMsg = data.message ? data.message.message : 'Erreur lors du marquage non livrable';
         showNotification(errorMsg, 'error');
